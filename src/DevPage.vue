@@ -7,6 +7,7 @@ import ToggleSection from './dev/sections/ToggleSection.vue';
 import WaveSelectorSection from './dev/sections/WaveSelectorSection.vue';
 import OscillatorModuleSection from './dev/sections/OscillatorModuleSection.vue';
 import FilterModuleSection from './dev/sections/FilterModuleSection.vue';
+import EnvelopeModuleSection from './dev/sections/EnvelopeModuleSection.vue';
 
 const activeTab = ref<'components' | 'modules'>('components');
 </script>
@@ -72,6 +73,7 @@ const activeTab = ref<'components' | 'modules'>('components');
     <div v-else class="space-y-6">
       <OscillatorModuleSection />
       <FilterModuleSection />
+      <EnvelopeModuleSection />
     </div>
   </main>
 </template>
