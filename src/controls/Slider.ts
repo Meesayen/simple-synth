@@ -50,6 +50,15 @@ export class Slider extends ControlBase {
     this.dragging = false;
   }
 
+  boundingBox(): { x: number; y: number; w: number; h: number } {
+    return {
+      x: this.x,
+      y: this.y - 17,
+      w: this.width,
+      h: this.height + 33,
+    };
+  }
+
   render(ctx: CanvasRenderingContext2D): void {
     const norm = this.normalized();
     const thumbY = this.y + this.height - norm * this.height;

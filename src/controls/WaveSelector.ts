@@ -131,6 +131,20 @@ export class WaveSelector implements Control {
     this.value.value = idx;
   }
 
+  boundingBox(): { x: number; y: number; w: number; h: number } {
+    const cx = this.x + this.knobRadius;
+    const cy = this.y + this.knobRadius;
+    const tickExtent = this.knobRadius + 11;
+    const vizX = this.x + this.knobRadius * 2 + 28;
+    const vizW = this.vizWidth;
+    const vizH = this.vizHeight;
+    const minX = Math.min(this.x, cx - tickExtent);
+    const maxX = Math.max(cx + tickExtent, vizX + vizW);
+    const minY = Math.min(this.y, cy - tickExtent);
+    const maxY = Math.max(cy + tickExtent, this.y + vizH + 14);
+    return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+  }
+
   render(ctx: CanvasRenderingContext2D): void {
     const cx = this.x + this.knobRadius;
     const cy = this.knobCenterY;

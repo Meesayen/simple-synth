@@ -51,6 +51,17 @@ export class Toggle implements Control {
     // no-op
   }
 
+  boundingBox(): { x: number; y: number; w: number; h: number } {
+    const topMargin = this.label ? 17 : 0;
+    const bottomMargin = this.showState ? 16 : 0;
+    return {
+      x: this.x,
+      y: this.y - topMargin,
+      w: this.width,
+      h: this.height + topMargin + bottomMargin,
+    };
+  }
+
   render(ctx: CanvasRenderingContext2D): void {
     const isOn = this.value.value;
     const radius = 3;

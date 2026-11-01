@@ -42,6 +42,15 @@ export class Knob extends ControlBase {
     this.dragging = false;
   }
 
+  boundingBox(): { x: number; y: number; w: number; h: number } {
+    return {
+      x: this.x - this.radius,
+      y: this.y - this.radius,
+      w: this.radius * 2,
+      h: this.radius * 2 + 28,
+    };
+  }
+
   render(ctx: CanvasRenderingContext2D): void {
     const norm = this.normalized();
     const startAngle = Math.PI * 0.75;
