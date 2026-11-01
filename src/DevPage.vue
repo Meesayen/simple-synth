@@ -8,6 +8,7 @@ import WaveSelectorSection from './dev/sections/WaveSelectorSection.vue';
 import OscillatorModuleSection from './dev/sections/OscillatorModuleSection.vue';
 import FilterModuleSection from './dev/sections/FilterModuleSection.vue';
 import EnvelopeModuleSection from './dev/sections/EnvelopeModuleSection.vue';
+import OutputModuleSection from './dev/sections/OutputModuleSection.vue';
 
 const activeTab = ref<'components' | 'modules'>('components');
 </script>
@@ -74,6 +75,7 @@ const activeTab = ref<'components' | 'modules'>('components');
       <OscillatorModuleSection />
       <FilterModuleSection />
       <EnvelopeModuleSection />
+      <OutputModuleSection />
     </div>
   </main>
 </template>
