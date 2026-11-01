@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { showHitboxes } from './canvas/debug';
+import { showHitboxes, showBBoxes } from './canvas/debug';
 import KnobSection from './dev/sections/KnobSection.vue';
 import SliderSection from './dev/sections/SliderSection.vue';
 import ToggleSection from './dev/sections/ToggleSection.vue';
@@ -26,6 +26,14 @@ const activeTab = ref<'components' | 'modules'>('components');
           class="h-4 w-4 rounded border-slate-600 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
         />
         Show hitboxes
+      </label>
+      <label class="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none">
+        <input
+          v-model="showBBoxes"
+          type="checkbox"
+          class="h-4 w-4 rounded border-slate-600 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
+        />
+        Show bboxes
       </label>
     </div>
 

@@ -10,6 +10,7 @@ export interface ToggleOptions {
   height?: number;
   value: Ref<boolean>;
   label?: string;
+  showState?: boolean;
   host?: CanvasHost;
 }
 
@@ -21,6 +22,7 @@ export class Toggle implements Control {
   height: number;
   value: Ref<boolean>;
   label: string;
+  showState: boolean;
 
   constructor(options: ToggleOptions) {
     this.x = options.x;
@@ -29,6 +31,7 @@ export class Toggle implements Control {
     this.height = options.height ?? 24;
     this.value = options.value;
     this.label = options.label ?? '';
+    this.showState = options.showState ?? true;
     this.host = options.host;
 
     watch(this.value, () => this.host?.requestRedraw(), { flush: 'post' });
@@ -49,6 +52,10 @@ export class Toggle implements Control {
 
   onPointerUp(): void {
     // no-op
+  }
+
+  hitbox(): { type: 'rect'; x: number; y: number; w: number; h: number } {
+    return { type: 'rect', x: this.x, y: this.y, w: this.width, h: this.height };
   }
 
   boundingBox(): { x: number; y: number; w: number; h: number } {
@@ -93,15 +100,6 @@ export class Toggle implements Control {
 
     // inner part has no border
 
-    // hitbox (debug)
-    if (showHitboxes.value) {
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 3]);
-      ctx.strokeRect(this.x, this.y, this.width, this.height);
-      ctx.setLineDash([]);
-    }
-
     // label
     ctx.fillStyle = '#e2e8f0';
     ctx.font = '11px system-ui, sans-serif';
@@ -109,10 +107,12 @@ export class Toggle implements Control {
     ctx.textBaseline = 'bottom';
     ctx.fillText(this.label, this.x + this.width / 2, this.y - 6);
 
-    // state
-    ctx.fillStyle = isOn ? '#818cf8' : '#94a3b8';
-    ctx.font = '10px ui-monospace, monospace';
-    ctx.textBaseline = 'top';
-    ctx.fillText(isOn ? 'ON' : 'OFF', this.x + this.width / 2, this.y + this.height + 6);
+    // state (optional)
+    if (this.showState) {
+      ctx.fillStyle = isOn ? '#818cf8' : '#94a3b8';
+      ctx.font = '10px ui-monospace, monospace';
+      ctx.textBaseline = 'top';
+      ctx.fillText(isOn ? 'ON' : 'OFF', this.x + this.width / 2, this.y + this.height + 6);
+    }
   }
 }

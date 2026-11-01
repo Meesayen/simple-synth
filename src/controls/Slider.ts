@@ -1,6 +1,5 @@
 import { type Ref } from 'vue';
 import { ControlBase, type ControlBaseOptions } from './ControlBase';
-import { showHitboxes } from '../canvas/debug';
 
 export interface SliderOptions extends ControlBaseOptions {
   x: number;
@@ -48,6 +47,10 @@ export class Slider extends ControlBase {
 
   onPointerUp(): void {
     this.dragging = false;
+  }
+
+  hitbox(): { type: 'rect'; x: number; y: number; w: number; h: number } {
+    return { type: 'rect', x: this.x, y: this.y, w: this.width, h: this.height };
   }
 
   boundingBox(): { x: number; y: number; w: number; h: number } {
@@ -103,15 +106,6 @@ export class Slider extends ControlBase {
     ctx.moveTo(this.x, thumbY + 2);
     ctx.lineTo(this.x + this.width, thumbY + 2);
     ctx.stroke();
-
-    // hitbox (debug)
-    if (showHitboxes.value) {
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 3]);
-      ctx.strokeRect(this.x, this.y, this.width, this.height);
-      ctx.setLineDash([]);
-    }
 
     // label
     ctx.fillStyle = '#e2e8f0';

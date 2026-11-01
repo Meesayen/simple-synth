@@ -1,4 +1,6 @@
+import { watch } from 'vue';
 import type { Control } from '../controls/Control';
+import { showHitboxes, showBBoxes } from './debug';
 
 export class CanvasHost {
   private canvas: HTMLCanvasElement;
@@ -30,6 +32,8 @@ export class CanvasHost {
     this.canvas.addEventListener('pointermove', this.handlePointerMove);
     this.canvas.addEventListener('pointerup', this.handlePointerUp);
     this.canvas.addEventListener('pointerleave', this.handlePointerUp);
+    watch(showHitboxes, () => this.requestRedraw());
+    watch(showBBoxes, () => this.requestRedraw());
     this.loop();
   }
 
@@ -65,6 +69,43 @@ export class CanvasHost {
       const h = this.canvas.height / this.dpr;
       this.ctx.clearRect(0, 0, w, h);
       for (const control of this.controls) control.render(this.ctx);
+      // Debug overlays (centralized)
+      if (showHitboxes.value) {
+        for (const control of this.controls) {
+          const hb = control.hitbox();
+          const list = Array.isArray(hb) ? hb : [hb];
+          this.ctx.strokeStyle = '#ef4444';
+          this.ctx.lineWidth = 1.5;
+          this.ctx.setLineDash([4, 3]);
+          for (const h of list) {
+            if (h.type === 'circle') {
+              this.ctx.beginPath();
+              this.ctx.arc(h.cx, h.cy, h.r, 0, Math.PI * 2);
+              this.ctx.stroke();
+            } else {
+              this.ctx.strokeRect(h.x, h.y, h.w, h.h);
+            }
+          }
+          this.ctx.setLineDash([]);
+        }
+      }
+      if (showBBoxes.value) {
+        for (const control of this.controls) {
+          const drawBBox = (bb: { x: number; y: number; w: number; h: number }, color: string) => {
+            this.ctx.strokeStyle = color;
+            this.ctx.lineWidth = 1.5;
+            this.ctx.setLineDash([4, 3]);
+            this.ctx.strokeRect(bb.x, bb.y, bb.w, bb.h);
+            this.ctx.setLineDash([]);
+          };
+          drawBBox(control.boundingBox(), '#3b82f6');
+          if (control.childControls) {
+            for (const child of control.childControls) {
+              drawBBox(child.boundingBox(), '#60a5fa');
+            }
+          }
+        }
+      }
     }
     this.rafId = requestAnimationFrame(this.loop);
   };

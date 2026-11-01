@@ -63,4 +63,11 @@ export abstract class ControlBase implements Control {
   abstract render(ctx: CanvasRenderingContext2D): void;
   abstract hitTest(x: number, y: number): boolean;
   abstract boundingBox(): { x: number; y: number; w: number; h: number };
+  abstract hitbox():
+    | { type: 'circle'; cx: number; cy: number; r: number }
+    | { type: 'rect'; x: number; y: number; w: number; h: number }
+    | (
+        | { type: 'circle'; cx: number; cy: number; r: number }
+        | { type: 'rect'; x: number; y: number; w: number; h: number }
+      )[];
 }

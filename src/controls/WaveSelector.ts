@@ -131,9 +131,18 @@ export class WaveSelector implements Control {
     this.value.value = idx;
   }
 
+  hitbox(): { type: 'circle'; cx: number; cy: number; r: number } {
+    return {
+      type: 'circle',
+      cx: this.x + this.knobRadius,
+      cy: this.knobCenterY,
+      r: this.knobRadius,
+    };
+  }
+
   boundingBox(): { x: number; y: number; w: number; h: number } {
     const cx = this.x + this.knobRadius;
-    const cy = this.y + this.knobRadius;
+    const cy = this.knobCenterY;
     const tickExtent = this.knobRadius + 11;
     const vizX = this.x + this.knobRadius * 2 + 28;
     const vizW = this.vizWidth;
@@ -210,17 +219,6 @@ export class WaveSelector implements Control {
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
     ctx.stroke();
-
-    // hitbox (debug)
-    if (showHitboxes.value) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, this.knobRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 3]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
 
     // visualizer
     const vx = this.x + this.knobRadius * 2 + 28;

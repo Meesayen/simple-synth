@@ -1,11 +1,10 @@
 import { ref, watch, type Ref } from 'vue';
-import type { Control } from '../controls/Control';
+import type { Control, Hitbox } from '../controls/Control';
 import type { CanvasHost } from '../canvas/CanvasHost';
 import { Knob } from '../controls/Knob';
 import { WaveSelector } from '../controls/WaveSelector';
 import { Toggle } from '../controls/Toggle';
 import { getAudioContext, getMasterGain, resumeAudio } from '../audio/AudioEngine';
-import { showHitboxes } from '../canvas/debug';
 
 const WAVEFORMS = ['sine', 'triangle', 'sawtooth', 'square'] as const;
 
@@ -217,7 +216,7 @@ export class OscillatorModule implements Control {
     return base * oct * det;
   }
 
-  private children(): Control[] {
+  get childControls(): Control[] {
     return [
       this.powerToggle,
       this.waveSelector,
@@ -229,7 +228,7 @@ export class OscillatorModule implements Control {
   }
 
   hitTest(x: number, y: number): boolean {
-    for (const c of this.children()) {
+    for (const c of this.childControls) {
       if (c.hitTest(x, y)) return true;
     }
     return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
@@ -237,7 +236,7 @@ export class OscillatorModule implements Control {
 
   onPointerDown(e: PointerEvent, x: number, y: number): void {
     void resumeAudio();
-    for (const c of this.children()) {
+    for (const c of this.childControls) {
       if (c.hitTest(x, y)) {
         this.activeChild = c;
         c.onPointerDown?.(e, x, y);
@@ -258,6 +257,16 @@ export class OscillatorModule implements Control {
       this.activeChild.onPointerUp?.(e, x, y);
       this.activeChild = null;
     }
+  }
+
+  hitbox(): Hitbox[] {
+    const result: Hitbox[] = [];
+    for (const c of this.childControls) {
+      const hb = c.hitbox();
+      if (Array.isArray(hb)) result.push(...hb);
+      else result.push(hb);
+    }
+    return result;
   }
 
   boundingBox(): { x: number; y: number; w: number; h: number } {
@@ -292,22 +301,13 @@ export class OscillatorModule implements Control {
     );
 
     // Children
-    for (const c of this.children()) c.render(ctx);
-
-    // Debug hitbox
-    if (showHitboxes.value) {
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 3]);
-      ctx.strokeRect(this.x, this.y, this.width, this.height);
-      ctx.setLineDash([]);
-    }
+    for (const c of this.childControls) c.render(ctx);
   }
 
   dispose(): void {
     this.stopOscillator();
     this.gainNode.disconnect();
     this.pannerNode.disconnect();
-    for (const c of this.children()) c.dispose?.();
+    for (const c of this.childControls) c.dispose?.();
   }
 }

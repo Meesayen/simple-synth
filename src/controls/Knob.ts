@@ -1,6 +1,5 @@
 import { type Ref } from 'vue';
 import { ControlBase, type ControlBaseOptions } from './ControlBase';
-import { showHitboxes } from '../canvas/debug';
 
 export interface KnobOptions extends ControlBaseOptions {
   x: number;
@@ -40,6 +39,10 @@ export class Knob extends ControlBase {
 
   onPointerUp(): void {
     this.dragging = false;
+  }
+
+  hitbox(): { type: 'circle'; cx: number; cy: number; r: number } {
+    return { type: 'circle', cx: this.x, cy: this.y, r: this.radius };
   }
 
   boundingBox(): { x: number; y: number; w: number; h: number } {
@@ -92,17 +95,6 @@ export class Knob extends ControlBase {
     ctx.lineWidth = 2;
     ctx.lineCap = 'butt';
     ctx.stroke();
-
-    // hitbox (debug)
-    if (showHitboxes.value) {
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 3]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
 
     // label
     ctx.fillStyle = '#e2e8f0';
