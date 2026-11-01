@@ -74,7 +74,7 @@ export class Knob implements Control {
 
   render(ctx: CanvasRenderingContext2D): void {
     const norm = (this.value.value - this.min) / (this.max - this.min || 1);
-    const startAngle = -Math.PI * 0.75;
+    const startAngle = Math.PI * 0.75;
     const sweep = Math.PI * 1.5;
     const angle = startAngle + norm * sweep;
 
