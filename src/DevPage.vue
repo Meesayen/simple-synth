@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { showHitboxes } from './canvas/debug';
 import KnobSection from './dev/sections/KnobSection.vue';
+import SliderSection from './dev/sections/SliderSection.vue';
 </script>
 
 <template>
@@ -22,5 +23,6 @@ import KnobSection from './dev/sections/KnobSection.vue';
       </label>
     </div>
     <KnobSection />
+    <SliderSection />
   </main>
 </template>

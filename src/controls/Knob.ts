@@ -1,48 +1,24 @@
-import { watch, type Ref } from 'vue';
-import type { Control } from './Control';
-import type { CanvasHost } from '../canvas/CanvasHost';
+import { type Ref } from 'vue';
+import { ControlBase, type ControlBaseOptions } from './ControlBase';
 import { showHitboxes } from '../canvas/debug';
 
-export interface KnobOptions {
+export interface KnobOptions extends ControlBaseOptions {
   x: number;
   y: number;
   radius?: number;
-  min?: number;
-  max?: number;
-  step?: number;
   value: Ref<number>;
-  label?: string;
-  host?: CanvasHost;
 }
 
-export class Knob implements Control {
-  host?: CanvasHost;
+export class Knob extends ControlBase {
   x: number;
   y: number;
   radius: number;
-  min: number;
-  max: number;
-  step: number;
-  value: Ref<number>;
-  label: string;
-
-  private dragging = false;
-  private startY = 0;
-  private startValue = 0;
 
   constructor(options: KnobOptions) {
+    super(options);
     this.x = options.x;
     this.y = options.y;
     this.radius = options.radius ?? 32;
-    this.min = options.min ?? 0;
-    this.max = options.max ?? 1;
-    this.step = options.step ?? 0;
-    this.value = options.value;
-    this.label = options.label ?? '';
-    this.host = options.host;
-
-    watch(this.value, () => this.host?.requestRedraw(), { flush: 'post' });
-    watch(showHitboxes, () => this.host?.requestRedraw(), { flush: 'post' });
   }
 
   hitTest(x: number, y: number): boolean {
@@ -59,13 +35,7 @@ export class Knob implements Control {
 
   onPointerMove(_e: PointerEvent, _x: number, y: number): void {
     if (!this.dragging) return;
-    const delta = (this.startY - y) / 120;
-    let next = this.startValue + delta * (this.max - this.min);
-    next = Math.min(this.max, Math.max(this.min, next));
-    if (this.step > 0) {
-      next = Math.round(next / this.step) * this.step;
-    }
-    this.value.value = next;
+    this.updateFromPointer(this.startY - y, 120);
   }
 
   onPointerUp(): void {
@@ -73,7 +43,7 @@ export class Knob implements Control {
   }
 
   render(ctx: CanvasRenderingContext2D): void {
-    const norm = (this.value.value - this.min) / (this.max - this.min || 1);
+    const norm = this.normalized();
     const startAngle = Math.PI * 0.75;
     const sweep = Math.PI * 1.5;
     const angle = startAngle + norm * sweep;
