@@ -6,6 +6,7 @@ import SliderSection from './dev/sections/SliderSection.vue';
 import ToggleSection from './dev/sections/ToggleSection.vue';
 import WaveSelectorSection from './dev/sections/WaveSelectorSection.vue';
 import OscillatorModuleSection from './dev/sections/OscillatorModuleSection.vue';
+import FilterModuleSection from './dev/sections/FilterModuleSection.vue';
 
 const activeTab = ref<'components' | 'modules'>('components');
 </script>
@@ -70,6 +71,7 @@ const activeTab = ref<'components' | 'modules'>('components');
     </div>
     <div v-else class="space-y-6">
       <OscillatorModuleSection />
+      <FilterModuleSection />
     </div>
   </main>
 </template>
