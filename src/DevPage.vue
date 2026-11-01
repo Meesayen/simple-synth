@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { showHitboxes } from './canvas/debug';
 import KnobSection from './dev/sections/KnobSection.vue';
 import SliderSection from './dev/sections/SliderSection.vue';
 import ToggleSection from './dev/sections/ToggleSection.vue';
 import WaveSelectorSection from './dev/sections/WaveSelectorSection.vue';
+import OscillatorModuleSection from './dev/sections/OscillatorModuleSection.vue';
+
+const activeTab = ref<'components' | 'modules'>('components');
 </script>
 
 <template>
@@ -24,9 +28,40 @@ import WaveSelectorSection from './dev/sections/WaveSelectorSection.vue';
         Show hitboxes
       </label>
     </div>
-    <KnobSection />
-    <SliderSection />
-    <ToggleSection />
-    <WaveSelectorSection />
+
+    <div class="flex gap-2 border-b border-slate-800">
+      <button
+        class="px-4 py-2 text-sm font-medium transition-colors border-b-2"
+        :class="
+          activeTab === 'components'
+            ? 'border-indigo-500 text-white'
+            : 'border-transparent text-slate-400 hover:text-slate-200'
+        "
+        @click="activeTab = 'components'"
+      >
+        Components
+      </button>
+      <button
+        class="px-4 py-2 text-sm font-medium transition-colors border-b-2"
+        :class="
+          activeTab === 'modules'
+            ? 'border-indigo-500 text-white'
+            : 'border-transparent text-slate-400 hover:text-slate-200'
+        "
+        @click="activeTab = 'modules'"
+      >
+        Modules
+      </button>
+    </div>
+
+    <div v-if="activeTab === 'components'" class="space-y-6">
+      <KnobSection />
+      <SliderSection />
+      <ToggleSection />
+      <WaveSelectorSection />
+    </div>
+    <div v-else class="space-y-6">
+      <OscillatorModuleSection />
+    </div>
   </main>
 </template>
