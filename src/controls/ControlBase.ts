@@ -13,6 +13,8 @@ export interface ControlBaseOptions {
 }
 
 export abstract class ControlBase implements Control {
+  abstract x: number;
+  abstract y: number;
   host?: CanvasHost;
   min: number;
   max: number;

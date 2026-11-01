@@ -5,6 +5,8 @@ export type Hitbox =
   | { type: 'rect'; x: number; y: number; w: number; h: number };
 
 export interface Control {
+  x: number;
+  y: number;
   host?: CanvasHost;
   render(ctx: CanvasRenderingContext2D): void;
   hitTest(x: number, y: number): boolean;
