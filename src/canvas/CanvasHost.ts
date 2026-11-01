@@ -7,21 +7,24 @@ export class CanvasHost {
   private dirty = true;
   private rafId = 0;
   private dragging: Control | null = null;
-  private resizeObserver: ResizeObserver | null = null;
+  private dpr = window.devicePixelRatio || 1;
+  private cssWidth = 0;
+  private cssHeight = 0;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D context not available');
     this.ctx = ctx;
-    this.resizeTo(this.canvas.clientWidth, this.canvas.clientHeight);
-    this.resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const { width, height } = entry.contentRect;
-        this.resizeTo(width, height);
-      }
-    });
-    this.resizeObserver.observe(this.canvas);
+    // Capture CSS size from the initial attributes before overwriting them.
+    this.cssWidth = Math.max(1, canvas.width || 1);
+    this.cssHeight = Math.max(1, canvas.height || 1);
+    this.dpr = window.devicePixelRatio || 1;
+    this.canvas.style.width = `${this.cssWidth}px`;
+    this.canvas.style.height = `${this.cssHeight}px`;
+    this.canvas.width = Math.max(1, Math.round(this.cssWidth * this.dpr));
+    this.canvas.height = Math.max(1, Math.round(this.cssHeight * this.dpr));
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     window.addEventListener('resize', this.handleWindowResize);
     this.canvas.addEventListener('pointerdown', this.handlePointerDown);
     this.canvas.addEventListener('pointermove', this.handlePointerMove);
@@ -46,27 +49,20 @@ export class CanvasHost {
   }
 
   private handleWindowResize = (): void => {
-    this.resizeTo(this.canvas.clientWidth, this.canvas.clientHeight);
-  };
-
-  private resizeTo(width: number, height: number): void {
-    const w = Math.max(1, Math.round(width || this.canvas.width));
-    const h = Math.max(1, Math.round(height || this.canvas.height));
-    if (this.canvas.width === w && this.canvas.height === h) {
-      this.dirty = true;
-      return;
-    }
-    this.canvas.width = w;
-    this.canvas.height = h;
-    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    this.dpr = window.devicePixelRatio || 1;
+    this.canvas.style.width = `${this.cssWidth}px`;
+    this.canvas.style.height = `${this.cssHeight}px`;
+    this.canvas.width = Math.max(1, Math.round(this.cssWidth * this.dpr));
+    this.canvas.height = Math.max(1, Math.round(this.cssHeight * this.dpr));
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     this.dirty = true;
-  }
+  };
 
   private loop = (): void => {
     if (this.dirty) {
       this.dirty = false;
-      const w = this.canvas.width;
-      const h = this.canvas.height;
+      const w = this.canvas.width / this.dpr;
+      const h = this.canvas.height / this.dpr;
       this.ctx.clearRect(0, 0, w, h);
       for (const control of this.controls) control.render(this.ctx);
     }
@@ -110,8 +106,6 @@ export class CanvasHost {
 
   dispose(): void {
     cancelAnimationFrame(this.rafId);
-    this.resizeObserver?.disconnect();
-    this.resizeObserver = null;
     window.removeEventListener('resize', this.handleWindowResize);
     this.canvas.removeEventListener('pointerdown', this.handlePointerDown);
     this.canvas.removeEventListener('pointermove', this.handlePointerMove);
