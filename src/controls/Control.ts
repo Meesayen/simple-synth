@@ -7,4 +7,5 @@ export interface Control {
   onPointerDown?(e: PointerEvent, x: number, y: number): void;
   onPointerMove?(e: PointerEvent, x: number, y: number): void;
   onPointerUp?(e: PointerEvent, x: number, y: number): void;
+  dispose?(): void;
 }

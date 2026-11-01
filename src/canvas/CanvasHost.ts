@@ -106,6 +106,7 @@ export class CanvasHost {
 
   dispose(): void {
     cancelAnimationFrame(this.rafId);
+    for (const control of this.controls) control.dispose?.();
     window.removeEventListener('resize', this.handleWindowResize);
     this.canvas.removeEventListener('pointerdown', this.handlePointerDown);
     this.canvas.removeEventListener('pointermove', this.handlePointerMove);

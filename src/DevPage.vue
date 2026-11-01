@@ -3,6 +3,7 @@ import { showHitboxes } from './canvas/debug';
 import KnobSection from './dev/sections/KnobSection.vue';
 import SliderSection from './dev/sections/SliderSection.vue';
 import ToggleSection from './dev/sections/ToggleSection.vue';
+import WaveSelectorSection from './dev/sections/WaveSelectorSection.vue';
 </script>
 
 <template>
@@ -26,5 +27,6 @@ import ToggleSection from './dev/sections/ToggleSection.vue';
     <KnobSection />
     <SliderSection />
     <ToggleSection />
+    <WaveSelectorSection />
   </main>
 </template>
