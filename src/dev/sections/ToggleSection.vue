@@ -22,6 +22,7 @@ onMounted(() => {
       host: host ?? undefined,
     }),
   );
+  host.fit();
 });
 
 onBeforeUnmount(() => {

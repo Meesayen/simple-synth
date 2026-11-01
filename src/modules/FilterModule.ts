@@ -1,6 +1,7 @@
 import { ref, watch, type Ref } from 'vue';
-import type { Control, Hitbox } from '../controls/Control';
+import type { Control } from '../controls/Control';
 import type { CanvasHost } from '../canvas/CanvasHost';
+import { ModuleBase } from './ModuleBase';
 import { Knob } from '../controls/Knob';
 import { Toggle } from '../controls/Toggle';
 import { getAudioContext, getMasterGain } from '../audio/AudioEngine';
@@ -16,13 +17,7 @@ export interface FilterModuleOptions {
   host?: CanvasHost;
 }
 
-export class FilterModule implements Control {
-  host?: CanvasHost;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-
+export class FilterModule extends ModuleBase {
   // State
   filterType: Ref<number>;
   isLP: Ref<boolean>;
@@ -46,11 +41,7 @@ export class FilterModule implements Control {
   public readonly input: GainNode;
 
   constructor(options: FilterModuleOptions) {
-    this.x = options.x;
-    this.y = options.y;
-    this.width = options.width ?? 280;
-    this.height = options.height ?? 190;
-    this.host = options.host;
+    super(options.x, options.y, options.width ?? 280, options.height ?? 190, options.host);
 
     this.filterType = ref(0);
     this.isLP = ref(true);
@@ -140,6 +131,12 @@ export class FilterModule implements Control {
     // Wrap both groups in an HStack
     this.layout = new HStack(cx + 18, cy + 28, [toggleStack, knobStack], 24, 'bottom');
 
+    // Register children for ModuleBase
+    this._children = [this.layout];
+
+    // Auto-size frame to children (no title height)
+    this.fitFrame(10, 0);
+
     // Radio logic
     watch(this.isLP, (v) => {
       if (v) {
@@ -182,13 +179,6 @@ export class FilterModule implements Control {
 
   get childControls(): Control[] {
     return [this.layout];
-  }
-
-  hitTest(x: number, y: number): boolean {
-    for (const c of this.childControls) {
-      if (c.hitTest(x, y)) return true;
-    }
-    return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
   }
 
   onPointerDown(e: PointerEvent, x: number, y: number): void {
@@ -236,22 +226,8 @@ export class FilterModule implements Control {
     for (const c of this.childControls) c.render(ctx);
   }
 
-  hitbox(): Hitbox[] {
-    const result: Hitbox[] = [];
-    for (const c of this.childControls) {
-      const hb = c.hitbox();
-      if (Array.isArray(hb)) result.push(...hb);
-      else result.push(hb);
-    }
-    return result;
-  }
-
-  boundingBox(): { x: number; y: number; w: number; h: number } {
-    return { x: this.x, y: this.y, w: this.width, h: this.height };
-  }
-
   dispose(): void {
     this.filterNode.disconnect();
-    for (const c of this.childControls) c.dispose?.();
+    super.dispose();
   }
 }

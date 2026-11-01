@@ -11,6 +11,7 @@ onMounted(() => {
   if (!canvasRef.value) return;
   host = new CanvasHost(canvasRef.value);
   host.add(new FilterModule({ x: 10, y: 10, host: host ?? undefined }));
+  host.fit();
 });
 
 onBeforeUnmount(() => {

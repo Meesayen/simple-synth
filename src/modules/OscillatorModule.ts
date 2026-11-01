@@ -1,5 +1,6 @@
 import { ref, watch, type Ref } from 'vue';
-import type { Control, Hitbox } from '../controls/Control';
+import { ModuleBase } from './ModuleBase';
+import type { Control } from '../controls/Control';
 import type { CanvasHost } from '../canvas/CanvasHost';
 import { Knob } from '../controls/Knob';
 import { WaveSelector } from '../controls/WaveSelector';
@@ -16,13 +17,7 @@ export interface OscillatorModuleOptions {
   host?: CanvasHost;
 }
 
-export class OscillatorModule implements Control {
-  host?: CanvasHost;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-
+export class OscillatorModule extends ModuleBase {
   // State
   power: Ref<boolean>;
   waveform: Ref<number>;
@@ -47,11 +42,7 @@ export class OscillatorModule implements Control {
   private pannerNode: StereoPannerNode;
 
   constructor(options: OscillatorModuleOptions) {
-    this.x = options.x;
-    this.y = options.y;
-    this.width = options.width ?? 400;
-    this.height = options.height ?? 195;
-    this.host = options.host;
+    super(options.x, options.y, options.width ?? 400, options.height ?? 195, options.host);
 
     this.power = ref(false);
     this.waveform = ref(0);
@@ -142,6 +133,19 @@ export class OscillatorModule implements Control {
       host: this.host,
     });
 
+    // Register children
+    this._children = [
+      this.powerToggle,
+      this.waveSelector,
+      this.volumeKnob,
+      this.panKnob,
+      this.octaveKnob,
+      this.detuneKnob,
+    ];
+
+    // Auto-size frame to children (no title height)
+    this.fitFrame(10, 0);
+
     // Watches -> audio + redraw
     watch(this.power, (on) => {
       if (on) {
@@ -216,23 +220,7 @@ export class OscillatorModule implements Control {
     return base * oct * det;
   }
 
-  get childControls(): Control[] {
-    return [
-      this.powerToggle,
-      this.waveSelector,
-      this.volumeKnob,
-      this.panKnob,
-      this.octaveKnob,
-      this.detuneKnob,
-    ];
-  }
-
-  hitTest(x: number, y: number): boolean {
-    for (const c of this.childControls) {
-      if (c.hitTest(x, y)) return true;
-    }
-    return x >= this.x && x <= this.x + this.width && y >= this.y && y <= this.y + this.height;
-  }
+  // children assigned in constructor
 
   onPointerDown(e: PointerEvent, x: number, y: number): void {
     void resumeAudio();
@@ -257,20 +245,6 @@ export class OscillatorModule implements Control {
       this.activeChild.onPointerUp?.(e, x, y);
       this.activeChild = null;
     }
-  }
-
-  hitbox(): Hitbox[] {
-    const result: Hitbox[] = [];
-    for (const c of this.childControls) {
-      const hb = c.hitbox();
-      if (Array.isArray(hb)) result.push(...hb);
-      else result.push(hb);
-    }
-    return result;
-  }
-
-  boundingBox(): { x: number; y: number; w: number; h: number } {
-    return { x: this.x, y: this.y, w: this.width, h: this.height };
   }
 
   render(ctx: CanvasRenderingContext2D): void {
@@ -308,6 +282,6 @@ export class OscillatorModule implements Control {
     this.stopOscillator();
     this.gainNode.disconnect();
     this.pannerNode.disconnect();
-    for (const c of this.childControls) c.dispose?.();
+    super.dispose();
   }
 }

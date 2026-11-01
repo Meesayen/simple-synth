@@ -52,6 +52,49 @@ export class CanvasHost {
     this.dirty = true;
   }
 
+  resize(cssW: number, cssH: number): void {
+    this.dpr = window.devicePixelRatio || 1;
+    const w = Math.max(1, Math.round(cssW));
+    const h = Math.max(1, Math.round(cssH));
+    this.canvas.style.width = `${w}px`;
+    this.canvas.style.height = `${h}px`;
+    this.canvas.width = Math.max(1, Math.round(w * this.dpr));
+    this.canvas.height = Math.max(1, Math.round(h * this.dpr));
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    this.dirty = true;
+  }
+
+  fit(padding = 8): void {
+    if (this.controls.length === 0) return;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const c of this.controls) {
+      const bb = c.boundingBox();
+      minX = Math.min(minX, bb.x);
+      minY = Math.min(minY, bb.y);
+      maxX = Math.max(maxX, bb.x + bb.w);
+      maxY = Math.max(maxY, bb.y + bb.h);
+    }
+    const cssW = Math.max(1, Math.round(maxX - minX + padding * 2));
+    const cssH = Math.max(1, Math.round(maxY - minY + padding * 2));
+    const dx = padding - minX;
+    const dy = padding - minY;
+    for (const c of this.controls) {
+      c.x += dx;
+      c.y += dy;
+      if (c.childControls) {
+        for (const child of c.childControls) {
+          child.x += dx;
+          child.y += dy;
+        }
+      }
+    }
+    this.resize(cssW, cssH);
+    this.requestRedraw();
+  }
+
   private handleWindowResize = (): void => {
     this.dpr = window.devicePixelRatio || 1;
     this.canvas.style.width = `${this.cssWidth}px`;
