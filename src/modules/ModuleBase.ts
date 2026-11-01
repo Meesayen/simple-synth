@@ -8,8 +8,6 @@ export abstract class ModuleBase implements Control {
   height: number;
   host?: CanvasHost;
 
-  protected _children: Control[] = [];
-
   constructor(x: number, y: number, width: number, height: number, host?: CanvasHost) {
     this.x = x;
     this.y = y;
@@ -18,17 +16,23 @@ export abstract class ModuleBase implements Control {
     this.host = host;
   }
 
+  protected _children: Control[] = [];
+
   get childControls(): Control[] {
     return this._children;
   }
 
+  addControl(control: Control): void {
+    this._children.push(control);
+  }
+
   fitFrame(padding = 10, titleHeight = 0): void {
-    if (this._children.length === 0) return;
+    if (this.childControls.length === 0) return;
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
-    for (const c of this._children) {
+    for (const c of this.childControls) {
       const bb = c.boundingBox();
       minX = Math.min(minX, bb.x);
       minY = Math.min(minY, bb.y);
@@ -37,7 +41,7 @@ export abstract class ModuleBase implements Control {
     }
     const dx = this.x + padding - minX;
     const dy = this.y + titleHeight + padding - minY;
-    for (const c of this._children) {
+    for (const c of this.childControls) {
       c.x += dx;
       c.y += dy;
     }
@@ -51,7 +55,7 @@ export abstract class ModuleBase implements Control {
 
   hitbox(): Hitbox | Hitbox[] {
     const result: Hitbox[] = [];
-    for (const c of this._children) {
+    for (const c of this.childControls) {
       const hb = c.hitbox();
       if (Array.isArray(hb)) result.push(...hb);
       else result.push(hb);
@@ -60,14 +64,14 @@ export abstract class ModuleBase implements Control {
   }
 
   hitTest(px: number, py: number): boolean {
-    for (const c of this._children) {
+    for (const c of this.childControls) {
       if (c.hitTest(px, py)) return true;
     }
     return px >= this.x && px <= this.x + this.width && py >= this.y && py <= this.y + this.height;
   }
 
   onPointerDown(e: PointerEvent, x: number, y: number): void {
-    for (const c of this._children) {
+    for (const c of this.childControls) {
       if (c.hitTest(x, y)) {
         c.onPointerDown?.(e, x, y);
         return;
@@ -76,19 +80,19 @@ export abstract class ModuleBase implements Control {
   }
 
   onPointerMove(e: PointerEvent, x: number, y: number): void {
-    for (const c of this._children) {
+    for (const c of this.childControls) {
       c.onPointerMove?.(e, x, y);
     }
   }
 
   onPointerUp(e: PointerEvent, x: number, y: number): void {
-    for (const c of this._children) {
+    for (const c of this.childControls) {
       c.onPointerUp?.(e, x, y);
     }
   }
 
   abstract render(ctx: CanvasRenderingContext2D): void;
   dispose(): void {
-    for (const c of this._children) c.dispose?.();
+    for (const c of this.childControls) c.dispose?.();
   }
 }

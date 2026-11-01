@@ -131,8 +131,8 @@ export class FilterModule extends ModuleBase {
     // Wrap both groups in an HStack
     this.layout = new HStack(cx + 18, cy + 28, [toggleStack, knobStack], 24, 'bottom');
 
-    // Register children for ModuleBase
-    this._children = [this.layout];
+    // Register children
+    this.addControl(this.layout);
 
     // Auto-size frame to children (no title height)
     this.fitFrame(10, 0);
@@ -175,10 +175,6 @@ export class FilterModule extends ModuleBase {
     watch(this.resonance, (v) => {
       this.filterNode.Q.setTargetAtTime(v, this.ctx.currentTime, 0.01);
     });
-  }
-
-  get childControls(): Control[] {
-    return [this.layout];
   }
 
   onPointerDown(e: PointerEvent, x: number, y: number): void {

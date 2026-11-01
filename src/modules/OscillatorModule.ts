@@ -134,14 +134,12 @@ export class OscillatorModule extends ModuleBase {
     });
 
     // Register children
-    this._children = [
-      this.powerToggle,
-      this.waveSelector,
-      this.volumeKnob,
-      this.panKnob,
-      this.octaveKnob,
-      this.detuneKnob,
-    ];
+    this.addControl(this.powerToggle);
+    this.addControl(this.waveSelector);
+    this.addControl(this.volumeKnob);
+    this.addControl(this.panKnob);
+    this.addControl(this.octaveKnob);
+    this.addControl(this.detuneKnob);
 
     // Auto-size frame to children (no title height)
     this.fitFrame(10, 0);
