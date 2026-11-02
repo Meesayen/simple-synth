@@ -15,6 +15,7 @@ export interface VoiceParams {
   filterType: BiquadFilterType;
   cutoff: number;
   resonance: number;
+  slope: number;
   attack: number;
   decay: number;
   sustain: number;
@@ -29,7 +30,8 @@ export class Voice {
   gain1: GainNode;
   osc2: OscillatorNode;
   gain2: GainNode;
-  filter: BiquadFilterNode;
+  stage1: BiquadFilterNode;
+  stage2: BiquadFilterNode;
   vca: GainNode;
   output: GainNode;
   note: number | null = null;
@@ -45,15 +47,17 @@ export class Voice {
     this.gain1 = ctx.createGain();
     this.osc2 = ctx.createOscillator();
     this.gain2 = ctx.createGain();
-    this.filter = ctx.createBiquadFilter();
+    this.stage1 = ctx.createBiquadFilter();
+    this.stage2 = ctx.createBiquadFilter();
     this.vca = ctx.createGain();
     this.output = ctx.createGain();
 
     this.osc1.connect(this.gain1);
     this.osc2.connect(this.gain2);
-    this.gain1.connect(this.filter);
-    this.gain2.connect(this.filter);
-    this.filter.connect(this.vca);
+    this.gain1.connect(this.stage1);
+    this.gain2.connect(this.stage1);
+    this.stage1.connect(this.stage2);
+    this.stage2.connect(this.vca);
     this.vca.connect(this.output);
     this.output.connect(destination);
 
@@ -68,9 +72,17 @@ export class Voice {
   configure(params: VoiceParams): void {
     this.osc1.type = params.waveform1 as OscillatorType;
     this.osc2.type = params.waveform2 as OscillatorType;
-    this.filter.type = params.filterType;
-    this.filter.frequency.value = params.cutoff;
-    this.filter.Q.value = params.resonance;
+    const type = params.filterType;
+    this.stage1.type = type;
+    this.stage1.frequency.value = params.cutoff;
+    this.stage1.Q.value = params.resonance;
+    if (params.slope >= 1) {
+      this.stage2.type = type;
+      this.stage2.frequency.value = params.cutoff;
+      this.stage2.Q.value = params.resonance;
+    } else {
+      this.stage2.type = 'allpass';
+    }
   }
 
   noteOn(note: number, velocity: number, params: VoiceParams): void {
@@ -106,11 +118,21 @@ export class Voice {
     this.osc2.frequency.cancelScheduledValues(now);
     this.osc2.frequency.setValueAtTime(freq2, now);
 
-    this.filter.type = params.filterType;
-    this.filter.frequency.cancelScheduledValues(now);
-    this.filter.frequency.setValueAtTime(params.cutoff, now);
-    this.filter.Q.cancelScheduledValues(now);
-    this.filter.Q.setValueAtTime(params.resonance, now);
+    const filterType = params.filterType;
+    this.stage1.type = filterType;
+    this.stage1.frequency.cancelScheduledValues(now);
+    this.stage1.frequency.setValueAtTime(params.cutoff, now);
+    this.stage1.Q.cancelScheduledValues(now);
+    this.stage1.Q.setValueAtTime(params.resonance, now);
+    if (params.slope >= 1) {
+      this.stage2.type = filterType;
+      this.stage2.frequency.cancelScheduledValues(now);
+      this.stage2.frequency.setValueAtTime(params.cutoff, now);
+      this.stage2.Q.cancelScheduledValues(now);
+      this.stage2.Q.setValueAtTime(params.resonance, now);
+    } else {
+      this.stage2.type = 'allpass';
+    }
 
     const g1 = params.osc1Enabled ? Math.cos((params.mix * Math.PI) / 2) : 0;
     const g2 = params.osc2Enabled ? Math.sin((params.mix * Math.PI) / 2) : 0;
@@ -177,7 +199,8 @@ export class Voice {
     this.gain1.disconnect();
     this.osc2.disconnect();
     this.gain2.disconnect();
-    this.filter.disconnect();
+    this.stage1.disconnect();
+    this.stage2.disconnect();
     this.vca.disconnect();
     this.output.disconnect();
   }

@@ -12,6 +12,8 @@ import OutputModuleSection from './dev/sections/OutputModuleSection.vue';
 import LFOModuleSection from './dev/sections/LFOModuleSection.vue';
 import MixModuleSection from './dev/sections/MixModuleSection.vue';
 import KeyboardModuleSection from './dev/sections/KeyboardModuleSection.vue';
+import DelayModuleSection from './dev/sections/DelayModuleSection.vue';
+import ReverbModuleSection from './dev/sections/ReverbModuleSection.vue';
 
 const activeTab = ref<'components' | 'modules'>('components');
 </script>
@@ -82,6 +84,8 @@ const activeTab = ref<'components' | 'modules'>('components');
       <OutputModuleSection />
       <LFOModuleSection />
       <MixModuleSection />
+      <DelayModuleSection />
+      <ReverbModuleSection />
     </div>
   </main>
 </template>

@@ -10,6 +10,7 @@ export interface KeyboardModuleOptions {
   height?: number;
   startNote?: number;
   octaves?: number;
+  whiteKeyWidth?: number;
   host?: CanvasHost;
   onNoteOn?: (note: number, velocity: number) => void;
   onNoteOff?: (note: number) => void;
@@ -67,7 +68,18 @@ export class KeyboardModule extends ModuleBase {
     super(options.x, options.y, options.width ?? 300, options.height ?? 90, options.host);
 
     this.startNote = options.startNote ?? 48; // C3
-    const octaves = options.octaves ?? 2;
+    let octaves = options.octaves ?? 2;
+    let whiteKeyWidth = options.whiteKeyWidth ?? 20;
+    if (options.width) {
+      if (!options.octaves) {
+        octaves = Math.max(2, Math.round(options.width / (7 * 20)));
+      }
+      whiteKeyWidth = options.width / (octaves * 7);
+      whiteKeyWidth = Math.max(12, Math.min(32, whiteKeyWidth));
+    }
+    this.whiteKeyWidth = whiteKeyWidth;
+    this.blackKeyWidth = whiteKeyWidth * 0.6;
+    this.blackKeyHeight = this.whiteKeyHeight * 0.625;
     this.onNoteOn = options.onNoteOn;
     this.onNoteOff = options.onNoteOff;
 

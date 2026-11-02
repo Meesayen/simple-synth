@@ -8,6 +8,8 @@ import { FilterModule } from '../modules/FilterModule';
 import { EnvelopeModule } from '../modules/EnvelopeModule';
 import { OutputModule } from '../modules/OutputModule';
 import { KeyboardModule } from '../modules/KeyboardModule';
+import { DelayModule } from '../modules/DelayModule';
+import { ReverbModule } from '../modules/ReverbModule';
 import { resumeAudio } from '../audio/AudioEngine';
 import { VoiceManager, type VoiceParams } from '../audio/VoiceManager';
 
@@ -25,6 +27,8 @@ const mixRef = shallowRef<MixModule | null>(null);
 const filterRef = shallowRef<FilterModule | null>(null);
 const ampEnvRef = shallowRef<EnvelopeModule | null>(null);
 const outputRef = shallowRef<OutputModule | null>(null);
+const delayRef = shallowRef<DelayModule | null>(null);
+const reverbRef = shallowRef<ReverbModule | null>(null);
 
 const params = computed<VoiceParams>(() => {
   const o1 = osc1Ref.value as OscillatorModule | null;
@@ -50,6 +54,7 @@ const params = computed<VoiceParams>(() => {
     filterType: (FILTER_TYPES[f?.filterType?.value ?? 0] ?? 'lowpass') as BiquadFilterType,
     cutoff: f?.cutoff?.value ?? 1000,
     resonance: f?.resonance?.value ?? 1,
+    slope: f?.slope?.value ?? 0,
     attack: e?.attack?.value ?? 0.1,
     decay: e?.decay?.value ?? 0.15,
     sustain: e?.sustain?.value ?? 0.8,
@@ -69,6 +74,8 @@ onMounted(() => {
   const filter = new FilterModule({ x: 10, y: 10, host: host ?? undefined });
   const ampEnv = new EnvelopeModule({ x: 10, y: 10, title: 'AMP ENV', host: host ?? undefined });
   const output = new OutputModule({ x: 10, y: 10, host: host ?? undefined });
+  const delay = new DelayModule({ x: 10, y: 10, host: host ?? undefined });
+  const reverb = new ReverbModule({ x: 10, y: 10, host: host ?? undefined });
 
   osc1Ref.value = osc1;
   osc2Ref.value = osc2;
@@ -76,17 +83,27 @@ onMounted(() => {
   filterRef.value = filter;
   ampEnvRef.value = ampEnv;
   outputRef.value = output;
+  delayRef.value = delay;
+  reverbRef.value = reverb;
 
   // Power on oscillators by default
   osc1.power.value = true;
   osc2.power.value = true;
 
-  voiceManager = new VoiceManager(8, output.input);
+  voiceManager = new VoiceManager(8, delay.input);
+  delay.output.connect(reverb.input);
+  reverb.output.connect(output.input);
   voiceManager.updateParams(params.value);
+
+  // Update voice params when controls change
+  watch(params, (p) => voiceManager?.updateParams(p), { deep: true });
+
+  const row1 = new HStack(10, 10, [osc1, osc2, mix], 16, 'top');
 
   const keyboard = new KeyboardModule({
     x: 10,
     y: 10,
+    width: row1.boundingBox().w,
     host: host ?? undefined,
     onNoteOn: async (note, velocity) => {
       await resumeAudio();
@@ -97,11 +114,10 @@ onMounted(() => {
     },
   });
 
-  // Update voice params when controls change
-  watch(params, (p) => voiceManager?.updateParams(p), { deep: true });
-
-  const row1 = new HStack(10, 10, [osc1, osc2, mix], 16, 'top');
-  const row2 = new HStack(10, 10, [filter, ampEnv, output], 16, 'top');
+  const row2Mods = [filter, ampEnv, delay, reverb, output];
+  const row2MaxH = Math.max(...row2Mods.map((m) => m.height));
+  for (const m of row2Mods) m.height = row2MaxH;
+  const row2 = new HStack(10, 10, row2Mods, 16, 'top');
   const row3 = new HStack(10, 10, [keyboard], 16, 'top');
   const layout = new VStack(10, 10, [row1, row2, row3], 16);
 
@@ -112,6 +128,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   voiceManager?.dispose();
   voiceManager = null;
+  delayRef.value?.dispose();
+  reverbRef.value?.dispose();
+  delayRef.value = null;
+  reverbRef.value = null;
   host?.dispose();
   host = null;
 });

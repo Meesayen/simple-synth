@@ -6,18 +6,21 @@ export interface KnobOptions extends ControlBaseOptions {
   y: number;
   radius?: number;
   value: Ref<number>;
+  valueFormatter?: (v: number) => string;
 }
 
 export class Knob extends ControlBase {
   x: number;
   y: number;
   radius: number;
+  valueFormatter?: (v: number) => string;
 
   constructor(options: KnobOptions) {
     super(options);
     this.x = options.x;
     this.y = options.y;
     this.radius = options.radius ?? 32;
+    this.valueFormatter = options.valueFormatter;
   }
 
   hitTest(x: number, y: number): boolean {
@@ -106,6 +109,9 @@ export class Knob extends ControlBase {
     // value
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10px ui-monospace, monospace';
-    ctx.fillText(this.value.value.toFixed(2), this.x, this.y + this.radius + 20);
+    const valueText = this.valueFormatter
+      ? this.valueFormatter(this.value.value)
+      : this.value.value.toFixed(2);
+    ctx.fillText(valueText, this.x, this.y + this.radius + 20);
   }
 }

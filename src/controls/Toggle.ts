@@ -12,6 +12,7 @@ export interface ToggleOptions {
   label?: string;
   showState?: boolean;
   host?: CanvasHost;
+  vertical?: boolean;
 }
 
 export class Toggle implements Control {
@@ -23,6 +24,7 @@ export class Toggle implements Control {
   value: Ref<boolean>;
   label: string;
   showState: boolean;
+  vertical: boolean;
 
   constructor(options: ToggleOptions) {
     this.x = options.x;
@@ -33,6 +35,12 @@ export class Toggle implements Control {
     this.label = options.label ?? '';
     this.showState = options.showState ?? true;
     this.host = options.host;
+    this.vertical = options.vertical ?? false;
+    if (this.vertical) {
+      const tmp = this.width;
+      this.width = this.height;
+      this.height = tmp;
+    }
 
     watch(this.value, () => this.host?.requestRedraw(), { flush: 'post' });
     watch(showHitboxes, () => this.host?.requestRedraw(), { flush: 'post' });
@@ -70,6 +78,32 @@ export class Toggle implements Control {
   }
 
   render(ctx: CanvasRenderingContext2D): void {
+    if (!this.vertical) {
+      this.drawHorizontal(ctx);
+      return;
+    }
+    ctx.save();
+    const cx = this.x + this.width / 2;
+    const cy = this.y + this.height / 2;
+    ctx.translate(cx, cy);
+    ctx.rotate(Math.PI / 2);
+    const origX = this.x;
+    const origY = this.y;
+    const origW = this.width;
+    const origH = this.height;
+    this.x = -origH / 2;
+    this.y = -origW / 2;
+    this.width = origH;
+    this.height = origW;
+    this.drawHorizontal(ctx);
+    this.x = origX;
+    this.y = origY;
+    this.width = origW;
+    this.height = origH;
+    ctx.restore();
+  }
+
+  private drawHorizontal(ctx: CanvasRenderingContext2D): void {
     const isOn = this.value.value;
     const radius = 3;
     const innerW = this.width - 10;
