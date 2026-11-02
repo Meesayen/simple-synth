@@ -26,15 +26,15 @@ I built this project just for fun: I wanted to play around with the **Web Audio 
 ## Development
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 ## Build
 
 ```bash
-npm run build        # output in dist/
-npm run build:pages  # output in docs/ (for GitHub Pages)
+pnpm run build        # output in dist/
+pnpm run build:pages  # output in docs/ (for GitHub Pages)
 ```
 
 ## Deploy
