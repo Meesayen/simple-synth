@@ -1,14 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Synth from './components/Synth.vue';
 import DevPage from './DevPage.vue';
 
 const page = ref<'synth' | 'dev'>('synth');
+
+const devEnabled = computed(() => {
+  const secret = import.meta.env.VITE_DEV_SECRET;
+  if (!secret) return false;
+  const params = new URLSearchParams(window.location.search);
+  return params.get('dev') === secret;
+});
 </script>
 
 <template>
   <div class="min-h-screen bg-slate-950">
-    <nav class="flex justify-center gap-4 py-4 border-b border-slate-800">
+    <nav v-if="devEnabled" class="flex justify-center gap-4 py-4 border-b border-slate-800">
       <button
         class="px-4 py-2 rounded-lg font-medium transition-colors"
         :class="
@@ -33,7 +40,7 @@ const page = ref<'synth' | 'dev'>('synth');
       </button>
     </nav>
 
-    <Synth v-if="page === 'synth'" />
+    <Synth v-if="page === 'synth' || !devEnabled" :dev-enabled="devEnabled" />
     <DevPage v-else />
   </div>
 </template>

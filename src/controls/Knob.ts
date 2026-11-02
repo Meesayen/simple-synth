@@ -1,48 +1,26 @@
-import { watch, type Ref } from 'vue';
-import type { Control } from './Control';
-import type { CanvasHost } from '../canvas/CanvasHost';
-import { showHitboxes } from '../canvas/debug';
+import { type Ref } from 'vue';
+import { ControlBase, type ControlBaseOptions } from './ControlBase';
 
-export interface KnobOptions {
+export interface KnobOptions extends ControlBaseOptions {
   x: number;
   y: number;
   radius?: number;
-  min?: number;
-  max?: number;
-  step?: number;
   value: Ref<number>;
-  label?: string;
-  host?: CanvasHost;
+  valueFormatter?: (v: number) => string;
 }
 
-export class Knob implements Control {
-  host?: CanvasHost;
+export class Knob extends ControlBase {
   x: number;
   y: number;
   radius: number;
-  min: number;
-  max: number;
-  step: number;
-  value: Ref<number>;
-  label: string;
-
-  private dragging = false;
-  private startY = 0;
-  private startValue = 0;
+  valueFormatter?: (v: number) => string;
 
   constructor(options: KnobOptions) {
+    super(options);
     this.x = options.x;
     this.y = options.y;
     this.radius = options.radius ?? 32;
-    this.min = options.min ?? 0;
-    this.max = options.max ?? 1;
-    this.step = options.step ?? 0;
-    this.value = options.value;
-    this.label = options.label ?? '';
-    this.host = options.host;
-
-    watch(this.value, () => this.host?.requestRedraw(), { flush: 'post' });
-    watch(showHitboxes, () => this.host?.requestRedraw(), { flush: 'post' });
+    this.valueFormatter = options.valueFormatter;
   }
 
   hitTest(x: number, y: number): boolean {
@@ -59,22 +37,29 @@ export class Knob implements Control {
 
   onPointerMove(_e: PointerEvent, _x: number, y: number): void {
     if (!this.dragging) return;
-    const delta = (this.startY - y) / 120;
-    let next = this.startValue + delta * (this.max - this.min);
-    next = Math.min(this.max, Math.max(this.min, next));
-    if (this.step > 0) {
-      next = Math.round(next / this.step) * this.step;
-    }
-    this.value.value = next;
+    this.updateFromPointer(this.startY - y, 120);
   }
 
   onPointerUp(): void {
     this.dragging = false;
   }
 
+  hitbox(): { type: 'circle'; cx: number; cy: number; r: number } {
+    return { type: 'circle', cx: this.x, cy: this.y, r: this.radius };
+  }
+
+  boundingBox(): { x: number; y: number; w: number; h: number } {
+    return {
+      x: this.x - this.radius,
+      y: this.y - this.radius,
+      w: this.radius * 2,
+      h: this.radius * 2 + 28,
+    };
+  }
+
   render(ctx: CanvasRenderingContext2D): void {
-    const norm = (this.value.value - this.min) / (this.max - this.min || 1);
-    const startAngle = -Math.PI * 0.75;
+    const norm = this.normalized();
+    const startAngle = Math.PI * 0.75;
     const sweep = Math.PI * 1.5;
     const angle = startAngle + norm * sweep;
 
@@ -114,17 +99,6 @@ export class Knob implements Control {
     ctx.lineCap = 'butt';
     ctx.stroke();
 
-    // hitbox (debug)
-    if (showHitboxes.value) {
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-      ctx.strokeStyle = '#ef4444';
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([4, 3]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
-
     // label
     ctx.fillStyle = '#e2e8f0';
     ctx.font = '11px system-ui, sans-serif';
@@ -135,6 +109,9 @@ export class Knob implements Control {
     // value
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10px ui-monospace, monospace';
-    ctx.fillText(this.value.value.toFixed(2), this.x, this.y + this.radius + 20);
+    const valueText = this.valueFormatter
+      ? this.valueFormatter(this.value.value)
+      : this.value.value.toFixed(2);
+    ctx.fillText(valueText, this.x, this.y + this.radius + 20);
   }
 }
