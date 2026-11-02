@@ -1,5 +1,46 @@
-# Vue 3 + TypeScript + Vite
+# Simple Synth
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+A subtractive synthesizer demo built with canvas-based modules. All synth logic runs in TypeScript; Vue is used only for page scaffolding.
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+**Live demo:** https://meesayen.github.io/simple-synth/
+
+## Motivation
+
+I built this project just for fun: I wanted to play around with the **Web Audio API** and drawing on **canvas**, putting together a subtractive synth with a fully canvas-rendered UI from scratch.
+
+## Features
+
+- Polyphonic voice manager (8 voices) with ADSR envelope
+- Modules: Oscillator, Filter (with slope), Envelope, LFO, Mix, Delay, Reverb, Output, Keyboard
+- Canvas-rendered UI (knobs, sliders, toggles, wave selectors)
+- Preset system (IndexedDB) with factory presets: Pixie, Acid Bass, Warm Pad, Bright Lead, Pluck, Deep Bass
+- Save / load configurations
+- Keyboard input (QWERTY) with octave selector
+
+## Tech stack
+
+- Vite+ (Vite, Vue 3, TypeScript, Tailwind v4)
+- Web Audio API
+- Canvas 2D
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+## Build
+
+```bash
+npm run build        # output in dist/
+npm run build:pages  # output in docs/ (for GitHub Pages)
+```
+
+## Deploy
+
+Pushing to `main` or `master` triggers the GitHub Actions workflow that builds and deploys to GitHub Pages.
+
+## License
+
+MIT
