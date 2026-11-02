@@ -11,6 +11,7 @@ export interface WaveSelectorOptions {
   vizHeight?: number;
   value: Ref<number>;
   label?: string;
+  showVisualizer?: boolean;
   host?: CanvasHost;
 }
 
@@ -51,6 +52,7 @@ export class WaveSelector implements Control {
   vizHeight: number;
   value: Ref<number>;
   label: string;
+  showVisualizer: boolean;
 
   private rafId = 0;
   private running = true;
@@ -65,6 +67,7 @@ export class WaveSelector implements Control {
     this.vizHeight = options.vizHeight ?? this.knobRadius * 2;
     this.value = options.value;
     this.label = options.label ?? '';
+    this.showVisualizer = options.showVisualizer ?? true;
     this.host = options.host;
 
     watch(this.value, () => this.host?.requestRedraw(), { flush: 'post' });
@@ -144,6 +147,14 @@ export class WaveSelector implements Control {
     const cx = this.x + this.knobRadius;
     const cy = this.knobCenterY;
     const tickExtent = this.knobRadius + 11;
+    if (!this.showVisualizer) {
+      return {
+        x: cx - tickExtent,
+        y: cy - tickExtent,
+        w: tickExtent * 2,
+        h: tickExtent * 2 + 14,
+      };
+    }
     const vizX = this.x + this.knobRadius * 2 + 28;
     const vizW = this.vizWidth;
     const vizH = this.vizHeight;
@@ -220,121 +231,125 @@ export class WaveSelector implements Control {
     ctx.lineCap = 'round';
     ctx.stroke();
 
-    // visualizer
-    const vx = this.x + this.knobRadius * 2 + 28;
-    const vy = this.y;
-    const vw = this.vizWidth;
-    const vh = this.vizHeight;
+    if (this.showVisualizer) {
+      // visualizer
+      const vx = this.x + this.knobRadius * 2 + 28;
+      const vy = this.y;
+      const vw = this.vizWidth;
+      const vh = this.vizHeight;
 
-    ctx.beginPath();
-    ctx.roundRect(vx, vy, vw, vh, 6);
-    ctx.fillStyle = '#0f172a';
-    ctx.fill();
-    ctx.strokeStyle = `rgba(51, 65, 85, ${0.5 + this.flicker * 0.5})`;
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    const midY = vy + vh / 2;
-    const amp = vh / 2 - 8;
-    // base waveform (static, flicker)
-    ctx.globalAlpha = this.flicker;
-    ctx.beginPath();
-    ctx.strokeStyle = '#818cf8';
-    ctx.lineWidth = 2;
-    ctx.lineJoin = 'round';
-    for (let i = 0; i <= vw; i++) {
-      const t = i / vw;
-      const phase = t * Math.PI * 2;
-      let sample = 0;
-      switch (WAVEFORMS[idx]) {
-        case 'sine':
-          sample = Math.sin(phase);
-          break;
-        case 'triangle':
-          sample = 1 - 4 * Math.abs(t - 0.5);
-          break;
-        case 'sawtooth':
-          sample = 2 * (t - Math.floor(t + 0.5));
-          break;
-        case 'square':
-          sample = Math.sin(phase) >= 0 ? 1 : -1;
-          break;
-      }
-      const px = vx + i;
-      const py = midY - sample * amp;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-
-    // traveling glow along the waveform
-    const glowCenter = Math.round(this.glowPos * vw);
-    const glowHalf = 12;
-    const gStart = Math.max(0, glowCenter - glowHalf);
-    const gEnd = Math.min(vw, glowCenter + glowHalf);
-    ctx.save();
-    ctx.globalAlpha = 0.55 * this.flicker;
-    ctx.beginPath();
-    ctx.strokeStyle = '#c7d2fe';
-    ctx.lineWidth = 3;
-    ctx.lineJoin = 'round';
-    ctx.shadowColor = 'rgba(129, 140, 248, 0.85)';
-    ctx.shadowBlur = 18;
-    for (let i = gStart; i <= gEnd; i++) {
-      const t = i / vw;
-      const phase = t * Math.PI * 2;
-      let sample = 0;
-      switch (WAVEFORMS[idx]) {
-        case 'sine':
-          sample = Math.sin(phase);
-          break;
-        case 'triangle':
-          sample = 1 - 4 * Math.abs(t - 0.5);
-          break;
-        case 'sawtooth':
-          sample = 2 * (t - Math.floor(t + 0.5));
-          break;
-        case 'square':
-          sample = Math.sin(phase) >= 0 ? 1 : -1;
-          break;
-      }
-      const px = vx + i;
-      const py = midY - sample * amp;
-      if (i === gStart) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    }
-    ctx.stroke();
-    ctx.restore();
-
-    // center line
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([2, 3]);
-    ctx.beginPath();
-    ctx.moveTo(vx, midY);
-    ctx.lineTo(vx + vw, midY);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // scanlines (CRT effect)
-    ctx.save();
-    ctx.globalAlpha = 0.08;
-    ctx.strokeStyle = '#e2e8f0';
-    ctx.lineWidth = 1;
-    for (let ly = vy + 2; ly < vy + vh; ly += 3) {
       ctx.beginPath();
-      ctx.moveTo(vx, ly);
-      ctx.lineTo(vx + vw, ly);
+      ctx.roundRect(vx, vy, vw, vh, 6);
+      ctx.fillStyle = '#0f172a';
+      ctx.fill();
+      ctx.strokeStyle = `rgba(51, 65, 85, ${0.5 + this.flicker * 0.5})`;
+      ctx.lineWidth = 1;
       ctx.stroke();
-    }
-    ctx.restore();
 
-    // waveform name (below visualizer)
-    ctx.fillStyle = '#818cf8';
-    ctx.font = '11px ui-monospace, monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(WAVEFORMS[idx], vx + vw / 2, vy + vh + 6);
+      const midY = vy + vh / 2;
+      const amp = vh / 2 - 8;
+      // base waveform (static, flicker)
+      ctx.globalAlpha = this.flicker;
+      ctx.beginPath();
+      ctx.strokeStyle = '#818cf8';
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      for (let i = 0; i <= vw; i++) {
+        const t = i / vw;
+        const phase = t * Math.PI * 2;
+        let sample = 0;
+        switch (WAVEFORMS[idx]) {
+          case 'sine':
+            sample = Math.sin(phase);
+            break;
+          case 'triangle':
+            sample = 1 - 4 * Math.abs(t - 0.5);
+            break;
+          case 'sawtooth':
+            sample = 2 * (t - Math.floor(t + 0.5));
+            break;
+          case 'square':
+            sample = Math.sin(phase) >= 0 ? 1 : -1;
+            break;
+        }
+        const px = vx + i;
+        const py = midY - sample * amp;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // traveling glow along the waveform
+      const glowCenter = Math.round(this.glowPos * vw);
+      const glowHalf = 12;
+      const gStart = Math.max(0, glowCenter - glowHalf);
+      const gEnd = Math.min(vw, glowCenter + glowHalf);
+      ctx.save();
+      ctx.globalAlpha = 0.55 * this.flicker;
+      ctx.beginPath();
+      ctx.strokeStyle = '#c7d2fe';
+      ctx.lineWidth = 3;
+      ctx.lineJoin = 'round';
+      ctx.shadowColor = 'rgba(129, 140, 248, 0.85)';
+      ctx.shadowBlur = 18;
+      for (let i = gStart; i <= gEnd; i++) {
+        const t = i / vw;
+        const phase = t * Math.PI * 2;
+        let sample = 0;
+        switch (WAVEFORMS[idx]) {
+          case 'sine':
+            sample = Math.sin(phase);
+            break;
+          case 'triangle':
+            sample = 1 - 4 * Math.abs(t - 0.5);
+            break;
+          case 'sawtooth':
+            sample = 2 * (t - Math.floor(t + 0.5));
+            break;
+          case 'square':
+            sample = Math.sin(phase) >= 0 ? 1 : -1;
+            break;
+        }
+        const px = vx + i;
+        const py = midY - sample * amp;
+        if (i === gStart) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // center line
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 3]);
+      ctx.beginPath();
+      ctx.moveTo(vx, midY);
+      ctx.lineTo(vx + vw, midY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // scanlines (CRT effect)
+      ctx.save();
+      ctx.globalAlpha = 0.08;
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      for (let ly = vy + 2; ly < vy + vh; ly += 3) {
+        ctx.beginPath();
+        ctx.moveTo(vx, ly);
+        ctx.lineTo(vx + vw, ly);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // waveform name (below visualizer)
+      ctx.fillStyle = '#818cf8';
+      ctx.font = '11px ui-monospace, monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(WAVEFORMS[idx], vx + vw / 2, vy + vh + 6);
+    } else {
+      // no visualizer: nothing extra to draw
+    }
   }
 }
