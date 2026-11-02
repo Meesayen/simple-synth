@@ -17,4 +17,9 @@ export default defineConfig({
     options: { typeAware: true, typeCheck: true },
   },
   plugins: lazyPlugins(() => [vue(), tailwindcss()]),
+  base: '/simple-synth/',
+  build: {
+    outDir: 'docs',
+    emptyOutDir: true,
+  },
 });
