@@ -10,6 +10,7 @@ export interface EnvelopeModuleOptions {
   y: number;
   width?: number;
   height?: number;
+  title?: string;
   host?: CanvasHost;
 }
 
@@ -19,6 +20,7 @@ export class EnvelopeModule extends ModuleBase {
   decay: Ref<number>;
   sustain: Ref<number>;
   release: Ref<number>;
+  title: string;
 
   // Audio
   private ctx: AudioContext;
@@ -29,6 +31,7 @@ export class EnvelopeModule extends ModuleBase {
   constructor(options: EnvelopeModuleOptions) {
     super(options.x, options.y, options.width ?? 320, options.height ?? 120, options.host);
 
+    this.title = options.title ?? 'ENV';
     this.attack = ref(0.1);
     this.decay = ref(0.15);
     this.sustain = ref(0.7);
@@ -57,6 +60,10 @@ export class EnvelopeModule extends ModuleBase {
       step: 0.01,
       value: this.attack,
       label: 'A',
+      valueFormatter: (v) => {
+        const ms = v * v * 5 * 1000;
+        return ms < 500 ? Math.round(ms) + ' ms' : (ms / 1000).toFixed(2) + ' s';
+      },
       host: this.host,
     });
     const decaySlider = new Slider({
@@ -69,6 +76,10 @@ export class EnvelopeModule extends ModuleBase {
       step: 0.01,
       value: this.decay,
       label: 'D',
+      valueFormatter: (v) => {
+        const ms = v * v * 5 * 1000;
+        return ms < 500 ? Math.round(ms) + ' ms' : (ms / 1000).toFixed(2) + ' s';
+      },
       host: this.host,
     });
     const sustainSlider = new Slider({
@@ -81,6 +92,7 @@ export class EnvelopeModule extends ModuleBase {
       step: 0.01,
       value: this.sustain,
       label: 'S',
+      valueFormatter: (v) => Math.round(v * 100) + '%',
       host: this.host,
     });
     const releaseSlider = new Slider({
@@ -93,6 +105,10 @@ export class EnvelopeModule extends ModuleBase {
       step: 0.01,
       value: this.release,
       label: 'R',
+      valueFormatter: (v) => {
+        const ms = v * v * 5 * 1000;
+        return ms < 500 ? Math.round(ms) + ' ms' : (ms / 1000).toFixed(2) + ' s';
+      },
       host: this.host,
     });
 
@@ -100,45 +116,59 @@ export class EnvelopeModule extends ModuleBase {
       cx + 12,
       cy + 40,
       [attackSlider, decaySlider, sustainSlider, releaseSlider],
-      18,
+      24,
     );
     this.addControl(sliderStack);
 
-    this.fitFrame(10, 24);
+    this.fitFrame(20, 24);
   }
 
-  trigger(): void {
-    const now = this.ctx.currentTime;
-    const a = Math.max(0.001, this.attack.value * this.attack.value * 2);
-    const d = Math.max(0.001, this.decay.value * this.decay.value * 1);
-    const s = Math.max(0.0001, this.sustain.value);
-    const r = Math.max(0.001, this.release.value * this.release.value * 2);
-    const peak = 1.0;
-    const hold = 0.2;
+  gate(on: boolean, velocity = 1): void {
+    const now = Number.isFinite(this.ctx.currentTime) ? this.ctx.currentTime : 0;
+    const a = Number.isFinite(this.attack.value)
+      ? Math.max(0.001, this.attack.value * this.attack.value * 5)
+      : 0.01;
+    const d = Number.isFinite(this.decay.value)
+      ? Math.max(0.001, this.decay.value * this.decay.value * 5)
+      : 0.1;
+    const s = Number.isFinite(this.sustain.value) ? Math.max(0.0001, this.sustain.value) : 0.7;
+    const r = Number.isFinite(this.release.value)
+      ? Math.max(0.001, this.release.value * this.release.value * 5)
+      : 0.2;
+    const peak = Math.max(0.05, Math.min(1, velocity));
     const eps = 0.001;
     const floor = 0.0001;
 
-    this.vca.gain.cancelScheduledValues(now);
-    this.vca.gain.setValueAtTime(Math.max(floor, 0), now);
-
-    // Attack (linear)
-    if (a <= eps) {
-      this.vca.gain.setValueAtTime(peak, now);
+    if (on) {
+      this.vca.gain.cancelScheduledValues(now);
+      this.vca.gain.setValueAtTime(Math.max(floor, 0), now);
+      if (a <= eps) {
+        this.vca.gain.setValueAtTime(peak, now);
+      } else {
+        this.vca.gain.linearRampToValueAtTime(peak, now + a);
+      }
+      const decayEnd = now + a + Math.max(eps, d);
+      this.vca.gain.exponentialRampToValueAtTime(Math.max(floor, s), decayEnd);
+      // Hold at sustain indefinitely
+      this.vca.gain.setValueAtTime(Math.max(floor, s), decayEnd);
     } else {
-      this.vca.gain.linearRampToValueAtTime(peak, now + a);
+      const current = Math.max(floor, this.vca.gain.value);
+      const releaseEnd = now + Math.max(eps, r);
+      this.vca.gain.cancelScheduledValues(now);
+      this.vca.gain.setValueAtTime(current, now);
+      this.vca.gain.exponentialRampToValueAtTime(floor, releaseEnd);
+      this.vca.gain.setValueAtTime(0, releaseEnd + 0.001);
     }
+  }
 
-    // Decay (exponential -> sustain level)
-    const decayEnd = now + a + Math.max(eps, d);
-    this.vca.gain.exponentialRampToValueAtTime(Math.max(floor, s), decayEnd);
-
-    // Sustain hold
-    this.vca.gain.setValueAtTime(Math.max(floor, s), decayEnd + hold);
-
-    // Release (exponential -> floor, then zero)
-    const releaseEnd = decayEnd + hold + Math.max(eps, r);
-    this.vca.gain.exponentialRampToValueAtTime(floor, releaseEnd);
-    this.vca.gain.setValueAtTime(0, releaseEnd + 0.001);
+  trigger(): void {
+    this.gate(true);
+    const a = Math.max(0.001, this.attack.value * this.attack.value * 5);
+    const d = Math.max(0.001, this.decay.value * this.decay.value * 5);
+    const r = Math.max(0.001, this.release.value * this.release.value * 5);
+    const hold = 0.2;
+    const total = a + d + hold + r;
+    setTimeout(() => this.gate(false), total * 1000);
   }
 
   render(ctx: CanvasRenderingContext2D): void {
@@ -156,7 +186,7 @@ export class EnvelopeModule extends ModuleBase {
     ctx.font = 'bold 12px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.fillText('ENV', this.x + this.width / 2, this.y + 10);
+    ctx.fillText(this.title, this.x + this.width / 2, this.y + 10);
 
     // Children
     for (const c of this.childControls) c.render(ctx);

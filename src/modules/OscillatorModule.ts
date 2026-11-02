@@ -25,6 +25,8 @@ export class OscillatorModule extends ModuleBase {
   pan: Ref<number>;
   octave: Ref<number>;
   detune: Ref<number>;
+  note: Ref<number | null>;
+  velocity: Ref<number>;
 
   // Children
   private powerToggle: Toggle;
@@ -51,6 +53,8 @@ export class OscillatorModule extends ModuleBase {
     this.pan = ref(0);
     this.octave = ref(0);
     this.detune = ref(0);
+    this.note = ref<number | null>(null);
+    this.velocity = ref(0.8);
 
     const cx = this.x;
     const cy = this.y;
@@ -151,7 +155,11 @@ export class OscillatorModule extends ModuleBase {
       if (on) {
         void resumeAudio();
         this.ensureOscillator();
-        this.gainNode.gain.setTargetAtTime(this.volume.value, this.ctx.currentTime, 0.01);
+        this.gainNode.gain.setTargetAtTime(
+          this.volume.value * this.velocity.value,
+          this.ctx.currentTime,
+          0.01,
+        );
         this.oscillator!.frequency.setTargetAtTime(
           this.frequencyValue(),
           this.ctx.currentTime,
@@ -170,7 +178,8 @@ export class OscillatorModule extends ModuleBase {
       this.host?.requestRedraw();
     });
     watch(this.volume, (v) => {
-      if (this.power.value) this.gainNode.gain.setTargetAtTime(v, this.ctx.currentTime, 0.01);
+      if (this.power.value)
+        this.gainNode.gain.setTargetAtTime(v * this.velocity.value, this.ctx.currentTime, 0.01);
     });
     watch(this.pan, (v) => {
       this.pannerNode.pan.setTargetAtTime(v, this.ctx.currentTime, 0.01);
@@ -214,10 +223,29 @@ export class OscillatorModule extends ModuleBase {
   }
 
   private frequencyValue(): number {
-    const base = 440;
+    const base = this.note.value !== null ? 440 * Math.pow(2, (this.note.value - 69) / 12) : 440;
     const oct = Math.pow(2, this.octave.value);
     const det = Math.pow(2, this.detune.value / 1200);
     return base * oct * det;
+  }
+
+  setNote(note: number | null): void {
+    this.note.value = note;
+    if (this.oscillator) {
+      this.oscillator.frequency.setTargetAtTime(this.frequencyValue(), this.ctx.currentTime, 0.01);
+    }
+  }
+
+  setVelocity(velocity: number): void {
+    this.velocity.value = Math.max(0, Math.min(1, velocity));
+    // Scale volume by velocity when gate is active
+    if (this.power.value) {
+      this.gainNode.gain.setTargetAtTime(
+        this.volume.value * this.velocity.value,
+        this.ctx.currentTime,
+        0.01,
+      );
+    }
   }
 
   // children assigned in constructor

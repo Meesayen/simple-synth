@@ -27,9 +27,13 @@ onMounted(() => {
   testOsc.start();
 });
 
-function trigger() {
+function gateOn() {
   void resumeAudio();
-  module?.trigger();
+  module?.gate(true);
+}
+
+function gateOff() {
+  module?.gate(false);
 }
 
 onBeforeUnmount(() => {
@@ -61,10 +65,12 @@ onBeforeUnmount(() => {
       <div class="text-slate-400 text-sm max-w-xs space-y-3">
         <p>ADSR envelope controlling a VCA. Adjust A, D, S, R.</p>
         <button
-          class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition-colors font-medium text-white"
-          @click="trigger"
+          class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition-colors font-medium text-white select-none"
+          @pointerdown="gateOn"
+          @pointerup="gateOff"
+          @pointerleave="gateOff"
         >
-          Trigger
+          Trigger (hold)
         </button>
       </div>
     </div>

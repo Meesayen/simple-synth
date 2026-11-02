@@ -7,6 +7,7 @@ export interface SliderOptions extends ControlBaseOptions {
   width?: number;
   height?: number;
   value: Ref<number>;
+  valueFormatter?: (v: number) => string;
 }
 
 export class Slider extends ControlBase {
@@ -14,6 +15,7 @@ export class Slider extends ControlBase {
   y: number;
   width: number;
   height: number;
+  valueFormatter?: (v: number) => string;
 
   constructor(options: SliderOptions) {
     super(options);
@@ -21,6 +23,7 @@ export class Slider extends ControlBase {
     this.y = options.y;
     this.width = options.width ?? 16;
     this.height = options.height ?? 120;
+    this.valueFormatter = options.valueFormatter;
   }
 
   hitTest(x: number, y: number): boolean {
@@ -118,6 +121,9 @@ export class Slider extends ControlBase {
     ctx.fillStyle = '#94a3b8';
     ctx.font = '10px ui-monospace, monospace';
     ctx.textBaseline = 'top';
-    ctx.fillText(this.value.value.toFixed(2), this.x + this.width / 2, this.y + this.height + 6);
+    const valueText = this.valueFormatter
+      ? this.valueFormatter(this.value.value)
+      : this.value.value.toFixed(2);
+    ctx.fillText(valueText, this.x + this.width / 2, this.y + this.height + 6);
   }
 }

@@ -11,6 +11,7 @@ import EnvelopeModuleSection from './dev/sections/EnvelopeModuleSection.vue';
 import OutputModuleSection from './dev/sections/OutputModuleSection.vue';
 import LFOModuleSection from './dev/sections/LFOModuleSection.vue';
 import MixModuleSection from './dev/sections/MixModuleSection.vue';
+import KeyboardModuleSection from './dev/sections/KeyboardModuleSection.vue';
 
 const activeTab = ref<'components' | 'modules'>('components');
 </script>
@@ -72,6 +73,7 @@ const activeTab = ref<'components' | 'modules'>('components');
       <SliderSection />
       <ToggleSection />
       <WaveSelectorSection />
+      <KeyboardModuleSection />
     </div>
     <div v-else class="space-y-6">
       <OscillatorModuleSection />
