@@ -21,7 +21,8 @@ const configList = ref<string[]>([]);
 const selectedConfig = ref<string>('');
 const newConfigName = ref('');
 const isDirty = ref(false);
-const keyboardInputEnabled = ref(true);
+const keyboardInputEnabled = ref(false);
+const keyboardOctave = ref(0);
 let loadedSnapshot: string | null = null;
 let loadedConfigName: string | null = null;
 
@@ -211,6 +212,7 @@ onMounted(async () => {
     width: row1.boundingBox().w,
     startNote: 24,
     inputEnabled: keyboardInputEnabled,
+    qwertyOctave: keyboardOctave,
     host: host ?? undefined,
     onNoteOn: async (note, velocity) => {
       await resumeAudio();
@@ -256,57 +258,69 @@ onBeforeUnmount(() => {
   <section
     class="min-h-screen bg-slate-950 text-slate-100 flex flex-col items-center justify-center p-8 gap-4"
   >
-    <div class="w-full max-w-4xl flex items-center justify-end gap-2 flex-wrap">
-      <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer select-none">
+    <div class="w-full max-w-4xl flex items-center justify-between gap-2 flex-wrap">
+      <div class="flex items-center gap-3">
+        <label class="flex items-center gap-2 text-slate-300 text-sm cursor-pointer select-none">
+          <input
+            v-model="keyboardInputEnabled"
+            type="checkbox"
+            class="h-4 w-4 rounded border-slate-600 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
+          />
+          Keyboard input
+        </label>
+        <select
+          v-model="keyboardOctave"
+          class="bg-slate-800 text-slate-200 text-sm rounded px-2 py-1 border border-slate-700"
+        >
+          <option v-for="o in [-2, -1, 0, 1, 2, 3, 4]" :key="o" :value="o">
+            {{ 'C' + (1 + o) }}
+          </option>
+        </select>
+      </div>
+      <div class="flex items-center gap-2">
+        <select
+          v-model="selectedConfig"
+          class="bg-slate-800 text-slate-200 text-sm rounded px-2 py-1 border border-slate-700"
+          @change="loadConfig()"
+        >
+          <option v-for="c in configList" :key="c" :value="c">
+            {{ isDirty && c === loadedConfigName ? '*' + c : c }}
+          </option>
+        </select>
         <input
-          v-model="keyboardInputEnabled"
-          type="checkbox"
-          class="h-4 w-4 rounded border-slate-600 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
+          v-model="newConfigName"
+          type="text"
+          placeholder="Config name"
+          class="bg-slate-800 text-slate-200 text-sm rounded px-2 py-1 border border-slate-700 w-32"
         />
-        Keyboard input
-      </label>
-      <select
-        v-model="selectedConfig"
-        class="bg-slate-800 text-slate-200 text-sm rounded px-2 py-1 border border-slate-700"
-        @change="loadConfig()"
-      >
-        <option v-for="c in configList" :key="c" :value="c">
-          {{ isDirty && c === loadedConfigName ? '*' + c : c }}
-        </option>
-      </select>
-      <input
-        v-model="newConfigName"
-        type="text"
-        placeholder="Config name"
-        class="bg-slate-800 text-slate-200 text-sm rounded px-2 py-1 border border-slate-700 w-32"
-      />
-      <button
-        class="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-sm"
-        @click="saveConfig"
-      >
-        Save
-      </button>
-      <button
-        class="px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white text-sm"
-        @click="deleteConfig"
-        :disabled="!selectedConfig"
-      >
-        Delete
-      </button>
-      <button
-        class="px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white text-sm"
-        @click="resetConfig"
-        :disabled="!loadedConfigName || !isDirty"
-      >
-        Reset
-      </button>
-      <button
-        v-if="props.devEnabled"
-        class="px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white text-sm"
-        @click="exportConfig"
-      >
-        Export
-      </button>
+        <button
+          class="px-3 py-1 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-sm"
+          @click="saveConfig"
+        >
+          Save
+        </button>
+        <button
+          class="px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white text-sm"
+          @click="deleteConfig"
+          :disabled="!selectedConfig"
+        >
+          Delete
+        </button>
+        <button
+          class="px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white text-sm"
+          @click="resetConfig"
+          :disabled="!loadedConfigName || !isDirty"
+        >
+          Reset
+        </button>
+        <button
+          v-if="props.devEnabled"
+          class="px-3 py-1 rounded bg-slate-700 hover:bg-slate-600 text-white text-sm"
+          @click="exportConfig"
+        >
+          Export
+        </button>
+      </div>
     </div>
     <canvas
       ref="canvasRef"

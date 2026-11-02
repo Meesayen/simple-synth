@@ -13,6 +13,7 @@ export interface KeyboardModuleOptions {
   whiteKeyWidth?: number;
   host?: CanvasHost;
   inputEnabled?: Ref<boolean>;
+  qwertyOctave?: Ref<number>;
   onNoteOn?: (note: number, velocity: number) => void;
   onNoteOff?: (note: number) => void;
 }
@@ -32,7 +33,7 @@ export class KeyboardModule extends ModuleBase {
   velocity: Ref<number>;
 
   private keys: Key[] = [];
-  private startNote: number;
+  private baseStartNote: number;
   private whiteKeyWidth = 20;
   private whiteKeyHeight = 80;
   private blackKeyWidth = 12;
@@ -44,6 +45,7 @@ export class KeyboardModule extends ModuleBase {
   private pointerPressedNote: number | null = null;
   private pressedKeys = new Set<string>();
   public inputEnabled: Ref<boolean>;
+  public qwertyOctave: Ref<number>;
   private handleKeyDown!: (e: KeyboardEvent) => void;
   private handleKeyUp!: (e: KeyboardEvent) => void;
   private keyMap: Record<string, number> = {
@@ -69,8 +71,9 @@ export class KeyboardModule extends ModuleBase {
   constructor(options: KeyboardModuleOptions) {
     super(options.x, options.y, options.width ?? 300, options.height ?? 90, options.host);
 
-    this.startNote = options.startNote ?? 48; // C3
+    this.baseStartNote = options.startNote ?? 48; // C3
     this.inputEnabled = options.inputEnabled ?? ref(true);
+    this.qwertyOctave = options.qwertyOctave ?? ref(0);
     let octaves = options.octaves ?? 2;
     let whiteKeyWidth = options.whiteKeyWidth ?? 20;
     if (options.width) {
@@ -94,7 +97,7 @@ export class KeyboardModule extends ModuleBase {
     let whiteIndex = 0;
     for (let o = 0; o < octaves; o++) {
       for (let s = 0; s < 12; s++) {
-        const note = this.startNote + o * 12 + s;
+        const note = this.baseStartNote + o * 12 + s;
         const isBlack = blackOffsets.includes(s);
         if (isBlack) {
           // position between previous white and next white
@@ -244,7 +247,7 @@ export class KeyboardModule extends ModuleBase {
   private computeNote(key: string, shift: boolean): number | null {
     const semitone = this.keyMap[key];
     if (semitone === undefined) return null;
-    const base = this.startNote; // C3
+    const base = this.baseStartNote + this.qwertyOctave.value * 12; // C3 + octave offset
     return base + semitone + (shift ? 12 : 0);
   }
 
