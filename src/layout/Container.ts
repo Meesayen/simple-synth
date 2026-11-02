@@ -143,6 +143,8 @@ export class VStack extends Container {
 
 export class HStack extends Container {
   align: 'top' | 'center' | 'bottom';
+  justify: 'start' | 'between';
+  fixedWidth?: number;
 
   constructor(
     x: number,
@@ -150,10 +152,14 @@ export class HStack extends Container {
     children: Control[],
     spacing = 8,
     align: 'top' | 'center' | 'bottom' = 'top',
+    fixedWidth?: number,
+    justify: 'start' | 'between' = 'start',
   ) {
     super(x, y, children);
     this.spacing = spacing;
     this.align = align;
+    this.fixedWidth = fixedWidth;
+    this.justify = justify;
     this.layoutAt(x, y);
   }
 
@@ -161,15 +167,27 @@ export class HStack extends Container {
     const positions: number[] = [];
     let curX = x;
     let maxH = 0;
-    for (const c of this.children) {
-      positions.push(curX);
-      const bb = c.boundingBox();
-      curX += bb.w + this.spacing;
-      maxH = Math.max(maxH, bb.h);
+    const bbs = this.children.map((c) => c.boundingBox());
+    for (const bb of bbs) maxH = Math.max(maxH, bb.h);
+
+    if (this.fixedWidth && this.justify === 'between' && this.children.length > 1) {
+      const totalW = bbs.reduce((s, bb) => s + bb.w, 0);
+      const gap = (this.fixedWidth - totalW) / (this.children.length - 1);
+      curX = x;
+      for (let i = 0; i < this.children.length; i++) {
+        positions.push(curX);
+        curX += bbs[i].w + gap;
+      }
+    } else {
+      for (let i = 0; i < this.children.length; i++) {
+        positions.push(curX);
+        curX += bbs[i].w + this.spacing;
+      }
     }
+
     let i = 0;
     for (const c of this.children) {
-      const bb = c.boundingBox();
+      const bb = bbs[i];
       const offsetX = bb.x - c.x;
       c.x = positions[i] - offsetX;
       const offsetY =
@@ -178,6 +196,14 @@ export class HStack extends Container {
       c.y = y + offsetY - offsetYOrigin;
       i++;
     }
+  }
+
+  boundingBox(): { x: number; y: number; w: number; h: number } {
+    const bb = super.boundingBox();
+    if (this.fixedWidth) {
+      return { x: bb.x, y: bb.y, w: this.fixedWidth, h: bb.h };
+    }
+    return bb;
   }
 }
 

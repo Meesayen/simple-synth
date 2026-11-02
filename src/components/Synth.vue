@@ -226,7 +226,7 @@ onMounted(async () => {
   const row2Mods = [filter, ampEnv, delay, reverb, output];
   const row2MaxH = Math.max(...row2Mods.map((m) => m.height));
   for (const m of row2Mods) m.height = row2MaxH;
-  const row2 = new HStack(10, 10, row2Mods, 16, 'top');
+  const row2 = new HStack(10, 10, row2Mods, 16, 'top', row1.boundingBox().w, 'between');
   const row3 = new HStack(10, 10, [keyboard], 16, 'top');
   const layout = new VStack(10, 10, [row1, row2, row3], 16);
 
