@@ -5,7 +5,7 @@ import type { CanvasHost } from '../canvas/CanvasHost';
 import { Knob } from '../controls/Knob';
 import { WaveSelector } from '../controls/WaveSelector';
 import { Toggle } from '../controls/Toggle';
-import { getAudioContext, getMasterGain, resumeAudio } from '../audio/AudioEngine';
+import { getAudioContext, resumeAudio } from '../audio/AudioEngine';
 
 const WAVEFORMS = ['sine', 'triangle', 'sawtooth', 'square'] as const;
 
@@ -40,6 +40,7 @@ export class OscillatorModule extends ModuleBase {
   private oscillator: OscillatorNode | null = null;
   private gainNode: GainNode;
   private pannerNode: StereoPannerNode;
+  public readonly output: GainNode;
 
   constructor(options: OscillatorModuleOptions) {
     super(options.x, options.y, options.width ?? 400, options.height ?? 195, options.host);
@@ -56,12 +57,13 @@ export class OscillatorModule extends ModuleBase {
 
     // Audio graph (oscillator created lazily on power-on)
     this.ctx = getAudioContext();
+    this.output = this.ctx.createGain();
     this.gainNode = this.ctx.createGain();
     this.pannerNode = this.ctx.createStereoPanner();
     this.gainNode.gain.value = 0;
     this.pannerNode.pan.value = this.pan.value;
     this.gainNode.connect(this.pannerNode);
-    this.pannerNode.connect(getMasterGain());
+    this.pannerNode.connect(this.output);
 
     // Children
     this.powerToggle = new Toggle({

@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue';
 import { CanvasHost } from '../../canvas/CanvasHost';
 import { EnvelopeModule } from '../../modules/EnvelopeModule';
-import { getAudioContext, resumeAudio } from '../../audio/AudioEngine';
+import { getAudioContext, getMasterGain, resumeAudio } from '../../audio/AudioEngine';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 
@@ -16,6 +16,7 @@ onMounted(() => {
   module = new EnvelopeModule({ x: 10, y: 10, host: host ?? undefined });
   host.add(module);
   host.fit();
+  module.output.connect(getMasterGain());
 
   const ctx = getAudioContext();
   void resumeAudio();

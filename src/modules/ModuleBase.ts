@@ -2,21 +2,39 @@ import type { Control, Hitbox } from '../controls/Control';
 import type { CanvasHost } from '../canvas/CanvasHost';
 
 export abstract class ModuleBase implements Control {
-  x: number;
-  y: number;
+  protected _x = 0;
+  protected _y = 0;
   width: number;
   height: number;
   host?: CanvasHost;
+  protected _children: Control[] = [];
 
   constructor(x: number, y: number, width: number, height: number, host?: CanvasHost) {
-    this.x = x;
-    this.y = y;
     this.width = width;
     this.height = height;
     this.host = host;
+    // Set position via setters (moves children, but none yet)
+    this._x = x;
+    this._y = y;
   }
 
-  protected _children: Control[] = [];
+  get x(): number {
+    return this._x;
+  }
+  set x(v: number) {
+    const dx = v - this._x;
+    this._x = v;
+    for (const c of this._children) c.x += dx;
+  }
+
+  get y(): number {
+    return this._y;
+  }
+  set y(v: number) {
+    const dy = v - this._y;
+    this._y = v;
+    for (const c of this._children) c.y += dy;
+  }
 
   get childControls(): Control[] {
     return this._children;

@@ -4,7 +4,7 @@ import type { CanvasHost } from '../canvas/CanvasHost';
 import { ModuleBase } from './ModuleBase';
 import { Knob } from '../controls/Knob';
 import { Toggle } from '../controls/Toggle';
-import { getAudioContext, getMasterGain } from '../audio/AudioEngine';
+import { getAudioContext } from '../audio/AudioEngine';
 import { VStack, HStack } from '../layout/Container';
 
 const FILTER_TYPES = ['lowpass', 'bandpass', 'highpass'] as const;
@@ -39,6 +39,7 @@ export class FilterModule extends ModuleBase {
   private ctx: AudioContext;
   private filterNode: BiquadFilterNode;
   public readonly input: GainNode;
+  public readonly output: GainNode;
 
   constructor(options: FilterModuleOptions) {
     super(options.x, options.y, options.width ?? 280, options.height ?? 190, options.host);
@@ -56,12 +57,13 @@ export class FilterModule extends ModuleBase {
     // Audio graph
     this.ctx = getAudioContext();
     this.input = this.ctx.createGain();
+    this.output = this.ctx.createGain();
     this.filterNode = this.ctx.createBiquadFilter();
     this.filterNode.type = FILTER_TYPES[this.filterType.value];
     this.filterNode.frequency.value = this.cutoff.value;
     this.filterNode.Q.value = this.resonance.value;
     this.input.connect(this.filterNode);
-    this.filterNode.connect(getMasterGain());
+    this.filterNode.connect(this.output);
 
     // Filter type toggles (radio behavior)
     const toggleW = 60;

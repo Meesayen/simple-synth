@@ -2,7 +2,7 @@ import { ref, watch, type Ref } from 'vue';
 import type { CanvasHost } from '../canvas/CanvasHost';
 import { Knob } from '../controls/Knob';
 import { HStack } from '../layout/Container';
-import { getAudioContext, getMasterGain } from '../audio/AudioEngine';
+import { getAudioContext } from '../audio/AudioEngine';
 import { ModuleBase } from './ModuleBase';
 
 export interface MixModuleOptions {
@@ -24,7 +24,7 @@ export class MixModule extends ModuleBase {
   public readonly input2: GainNode;
   private gain1: GainNode;
   private gain2: GainNode;
-  private outputGain: GainNode;
+  public readonly output: GainNode;
 
   constructor(options: MixModuleOptions) {
     super(options.x, options.y, options.width ?? 200, options.height ?? 140, options.host);
@@ -41,16 +41,15 @@ export class MixModule extends ModuleBase {
     this.input2 = this.ctx.createGain();
     this.gain1 = this.ctx.createGain();
     this.gain2 = this.ctx.createGain();
-    this.outputGain = this.ctx.createGain();
+    this.output = this.ctx.createGain();
 
     this.updateMix(this.mix.value);
-    this.outputGain.gain.value = this.master.value;
+    this.output.gain.value = this.master.value;
 
     this.input1.connect(this.gain1);
     this.input2.connect(this.gain2);
-    this.gain1.connect(this.outputGain);
-    this.gain2.connect(this.outputGain);
-    this.outputGain.connect(getMasterGain());
+    this.gain1.connect(this.output);
+    this.gain2.connect(this.output);
 
     // Knobs
     const mixKnob = new Knob({
@@ -89,7 +88,7 @@ export class MixModule extends ModuleBase {
       this.gain2.gain.setTargetAtTime(g2, this.ctx.currentTime, 0.01);
     });
     watch(this.master, (v) => {
-      this.outputGain.gain.setTargetAtTime(v, this.ctx.currentTime, 0.01);
+      this.output.gain.setTargetAtTime(v, this.ctx.currentTime, 0.01);
     });
   }
 
@@ -126,7 +125,7 @@ export class MixModule extends ModuleBase {
     this.input2.disconnect();
     this.gain1.disconnect();
     this.gain2.disconnect();
-    this.outputGain.disconnect();
+    this.output.disconnect();
     super.dispose();
   }
 }

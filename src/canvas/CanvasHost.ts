@@ -1,6 +1,7 @@
 import { watch } from 'vue';
 import type { Control } from '../controls/Control';
 import { showHitboxes, showBBoxes } from './debug';
+import { resumeAudio } from '../audio/AudioEngine';
 
 export class CanvasHost {
   private canvas: HTMLCanvasElement;
@@ -159,6 +160,7 @@ export class CanvasHost {
   }
 
   private handlePointerDown = (e: PointerEvent): void => {
+    void resumeAudio();
     e.preventDefault();
     const { x, y } = this.toLocal(e);
     for (let i = this.controls.length - 1; i >= 0; i--) {

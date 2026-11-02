@@ -2,7 +2,7 @@ import { ref, type Ref } from 'vue';
 import type { CanvasHost } from '../canvas/CanvasHost';
 import { Slider } from '../controls/Slider';
 import { HStack } from '../layout/Container';
-import { getAudioContext, getMasterGain } from '../audio/AudioEngine';
+import { getAudioContext } from '../audio/AudioEngine';
 import { ModuleBase } from './ModuleBase';
 
 export interface EnvelopeModuleOptions {
@@ -45,7 +45,6 @@ export class EnvelopeModule extends ModuleBase {
     this.vca.gain.value = 0;
     this.input.connect(this.vca);
     this.vca.connect(this.output);
-    this.output.connect(getMasterGain());
 
     // Sliders (normalized 0..1)
     const attackSlider = new Slider({

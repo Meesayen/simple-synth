@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { CanvasHost } from '../../canvas/CanvasHost';
 import { MixModule } from '../../modules/MixModule';
-import { getAudioContext, resumeAudio } from '../../audio/AudioEngine';
+import { getAudioContext, getMasterGain, resumeAudio } from '../../audio/AudioEngine';
 
 const canvasRef = ref<HTMLCanvasElement | null>(null);
 const testEnabled = ref(false);
@@ -18,6 +18,7 @@ onMounted(() => {
   module = new MixModule({ x: 10, y: 10, host: host ?? undefined });
   host.add(module);
   host.fit();
+  module.output.connect(getMasterGain());
 });
 
 watch(testEnabled, (on) => {

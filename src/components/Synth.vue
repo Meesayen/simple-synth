@@ -1,36 +1,51 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { CanvasHost } from '../canvas/CanvasHost';
+import { HStack } from '../layout/Container';
+import { OscillatorModule } from '../modules/OscillatorModule';
+import { MixModule } from '../modules/MixModule';
+import { OutputModule } from '../modules/OutputModule';
 
-const canvas = ref<HTMLCanvasElement | null>(null);
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+
+let host: CanvasHost | null = null;
 
 onMounted(() => {
-  const ctx = canvas.value?.getContext('2d');
-  if (!ctx) return;
+  if (!canvasRef.value) return;
+  host = new CanvasHost(canvasRef.value);
 
-  ctx.fillStyle = '#020617';
-  ctx.fillRect(0, 0, 960, 600);
+  const osc1 = new OscillatorModule({ x: 10, y: 10, host: host ?? undefined });
+  const osc2 = new OscillatorModule({ x: 10, y: 10, host: host ?? undefined });
+  const mix = new MixModule({ x: 10, y: 10, host: host ?? undefined });
+  const output = new OutputModule({ x: 10, y: 10, host: host ?? undefined });
 
-  ctx.fillStyle = '#e2e8f0';
-  ctx.font = 'bold 28px system-ui, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('Synth Canvas', 480, 290);
+  // Audio routing
+  osc1.output.connect(mix.input1);
+  osc2.output.connect(mix.input2);
+  mix.output.connect(output.input);
 
-  ctx.fillStyle = '#64748b';
-  ctx.font = '14px system-ui, sans-serif';
-  ctx.fillText('960 × 600 · 16:10', 480, 320);
+  // Power on oscillators by default
+  osc1.power.value = true;
+  osc2.power.value = true;
+
+  const layout = new HStack(10, 10, [osc1, osc2, mix, output], 16, 'top');
+  host.add(layout);
+  host.fit();
+});
+
+onBeforeUnmount(() => {
+  host?.dispose();
+  host = null;
 });
 </script>
 
 <template>
   <section class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-8">
-    <div class="w-[960px] max-w-full aspect-[16/10]">
-      <canvas
-        ref="canvas"
-        width="960"
-        height="600"
-        class="w-full h-full rounded-xl border border-slate-800 bg-slate-900"
-      ></canvas>
-    </div>
+    <canvas
+      ref="canvasRef"
+      width="960"
+      height="260"
+      class="rounded-xl border border-slate-800 bg-slate-900 touch-none select-none"
+    ></canvas>
   </section>
 </template>
