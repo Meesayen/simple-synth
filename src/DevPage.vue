@@ -10,6 +10,7 @@ import FilterModuleSection from './dev/sections/FilterModuleSection.vue';
 import EnvelopeModuleSection from './dev/sections/EnvelopeModuleSection.vue';
 import OutputModuleSection from './dev/sections/OutputModuleSection.vue';
 import LFOModuleSection from './dev/sections/LFOModuleSection.vue';
+import MixModuleSection from './dev/sections/MixModuleSection.vue';
 
 const activeTab = ref<'components' | 'modules'>('components');
 </script>
@@ -78,6 +79,7 @@ const activeTab = ref<'components' | 'modules'>('components');
       <EnvelopeModuleSection />
       <OutputModuleSection />
       <LFOModuleSection />
+      <MixModuleSection />
     </div>
   </main>
 </template>
