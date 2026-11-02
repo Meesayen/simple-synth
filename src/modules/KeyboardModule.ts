@@ -12,6 +12,7 @@ export interface KeyboardModuleOptions {
   octaves?: number;
   whiteKeyWidth?: number;
   host?: CanvasHost;
+  inputEnabled?: Ref<boolean>;
   onNoteOn?: (note: number, velocity: number) => void;
   onNoteOff?: (note: number) => void;
 }
@@ -42,6 +43,7 @@ export class KeyboardModule extends ModuleBase {
   private keyToNote = new Map<string, number>();
   private pointerPressedNote: number | null = null;
   private pressedKeys = new Set<string>();
+  public inputEnabled: Ref<boolean>;
   private handleKeyDown!: (e: KeyboardEvent) => void;
   private handleKeyUp!: (e: KeyboardEvent) => void;
   private keyMap: Record<string, number> = {
@@ -68,6 +70,7 @@ export class KeyboardModule extends ModuleBase {
     super(options.x, options.y, options.width ?? 300, options.height ?? 90, options.host);
 
     this.startNote = options.startNote ?? 48; // C3
+    this.inputEnabled = options.inputEnabled ?? ref(true);
     let octaves = options.octaves ?? 2;
     let whiteKeyWidth = options.whiteKeyWidth ?? 20;
     if (options.width) {
@@ -246,6 +249,7 @@ export class KeyboardModule extends ModuleBase {
   }
 
   private onKeyDown(e: KeyboardEvent): void {
+    if (!this.inputEnabled.value) return;
     if (e.repeat) return;
     const semitone = this.keyMap[e.code];
     if (semitone === undefined) return;
@@ -263,6 +267,7 @@ export class KeyboardModule extends ModuleBase {
   }
 
   private onKeyUp(e: KeyboardEvent): void {
+    if (!this.inputEnabled.value) return;
     if (!this.pressedKeys.has(e.code)) return;
     this.pressedKeys.delete(e.code);
     const note = this.keyToNote.get(e.code) ?? this.computeNote(e.code, e.shiftKey);

@@ -40,7 +40,7 @@ const devEnabled = computed(() => {
       </button>
     </nav>
 
-    <Synth v-if="page === 'synth' || !devEnabled" />
+    <Synth v-if="page === 'synth' || !devEnabled" :dev-enabled="devEnabled" />
     <DevPage v-else />
   </div>
 </template>
